@@ -1,0 +1,9 @@
+[tool.commitizen]
+name = "cz_conventional_commits"
+version = "0.0.1"
+tag_format = "$version"
+version_files = [
+    "Cargo.toml:version"
+]
+bump_message = "chore(release): version $current_version → $new_version"
+update_changelog_on_bump = true
