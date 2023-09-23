@@ -1,17 +1,17 @@
 use crate::Result;
 
 #[cfg(feature = "clipboard")]
-use clipboard::{ClipboardContext, ClipboardProvider};
+use arboard::Clipboard;
 
 use log::*;
 
 #[cfg(feature = "clipboard")]
 pub fn set_clipboard(val: Option<String>) -> Result<()> {
-    ClipboardProvider::new()
-        .and_then(|mut ctx: ClipboardContext| ctx.set_contents(val.unwrap_or_default()))
+    Clipboard::new()
+        .and_then(|mut clipboard| clipboard.set_text(val.unwrap_or_default()))
         .map_err(|e| {
             warn!("could not set the clipboard: {}", e);
-            e
+            e.into()
         })
 }
 

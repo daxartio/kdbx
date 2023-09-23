@@ -92,9 +92,6 @@ use libc::{c_char, c_int, syscall, SYS_add_key, SYS_keyctl, SYS_request_key};
 use std::{ffi::CString, io, ptr};
 
 #[cfg(target_os = "linux")]
-use log::*;
-
-#[cfg(target_os = "linux")]
 pub struct Keyring {
     desc: CString,
 }
