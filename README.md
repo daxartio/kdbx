@@ -10,4 +10,4 @@ kdbx --help
 
 ## License
 
-MIT/Unlicensed
+MIT

@@ -15,7 +15,7 @@ pub(crate) fn run(args: Args) -> Result<()> {
     if let Some(query) = query {
         if let [entry] = db.find(query).as_slice() {
             wout!("-----");
-            put!("{}", entry);
+            put!("{} ", entry);
             wout!("-----");
             return Ok(());
         }
@@ -29,7 +29,7 @@ pub(crate) fn run(args: Args) -> Result<()> {
         args.flag_full_screen,
     ) {
         wout!("-----");
-        put!("{}", entry);
+        put!("{} ", entry);
         wout!("-----");
         return Ok(());
     }

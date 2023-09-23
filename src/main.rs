@@ -30,9 +30,13 @@ Usage:
 
 Commands:
     clip     Copy password and clear clipboard after specified amount of time.
-             This is default command if no other provided.
+             This is default command if no other provided. Alias `c`.
 
-    info     Display entry's info. Alias `show`.
+    info     Display entry's info. Alias `show`, `s`, `i`.
+
+    add      Add new entry. Alias `a`.
+
+    init     Init new database.
 
 Options:
     -d, --database <file>       KDBX file path.
@@ -88,6 +92,8 @@ fn main() {
     if let Err(err) = match args.arg_command {
         Command::Clip => commands::clip::run(args),
         Command::Show => commands::show::run(args),
+        Command::Init => commands::init::run(args),
+        Command::Add => todo!(),
         Command::Unknown(cmd) => {
             Err(format!("Unknown command `{}`. Use `--help` to get more info.", cmd).into())
         }
@@ -101,6 +107,8 @@ fn main() {
 enum Command {
     Clip,
     Show,
+    Add,
+    Init,
     Unknown(String),
 }
 
@@ -120,7 +128,7 @@ struct Args {
 
 impl Args {
     fn from_env(dopt: &Docopt) -> Args {
-        let env_var = env::var(&ENV_VAR_NAME.to_uppercase()).unwrap_or_default();
+        let env_var = env::var(ENV_VAR_NAME.to_uppercase()).unwrap_or_default();
 
         let mut argv = "BIN_NAME clip ".to_string();
         argv.push_str(env_var.as_str().trim());
@@ -244,6 +252,8 @@ impl<'de> Visitor<'de> for CommandVisitor {
         Ok(match &*s.to_lowercase() {
             "clip" | "c" => Command::Clip,
             "show" | "s" | "info" | "i" => Command::Show,
+            "add" | "a" => Command::Add,
+            "init" => Command::Init,
             cmd => Command::Unknown(cmd.to_owned()),
         })
     }

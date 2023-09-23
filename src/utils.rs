@@ -70,7 +70,7 @@ pub fn open_database(dbfile: &Path, keyfile: Option<&Path>, use_keyring: bool) -
     // Allow multiple attempts to enter the password from TTY
     let mut att = 3;
     loop {
-        put!("Password:");
+        put!("Password: ");
 
         let pwd = STDIN.read_password();
         let key = CompositeKey::new(Some(&pwd), keyfile)?;

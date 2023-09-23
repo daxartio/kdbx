@@ -2,6 +2,7 @@ use log::*;
 
 use std::{convert::AsRef, ops::Deref, ptr, sync::atomic};
 
+#[derive(PartialEq)]
 pub struct Pwd(String);
 
 impl From<String> for Pwd {
@@ -31,7 +32,7 @@ impl Drop for Pwd {
     }
 }
 
-fn zero_memory(pwd: &mut String) {
+fn zero_memory(pwd: &mut str) {
     unsafe {
         for byte in pwd.as_bytes_mut() {
             ptr::write_volatile(byte, 0x00);

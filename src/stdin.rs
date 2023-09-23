@@ -29,6 +29,12 @@ impl Stdin {
         pwd
     }
 
+    pub fn read_text(&self) -> String {
+        let text = read_text(self.0).unwrap();
+        self.reset_tty();
+        text
+    }
+
     pub fn reset_tty(&self) {
         info!("resetting TTY params");
         reset_impl(self.0);
@@ -73,14 +79,33 @@ fn read_password(tty: Option<libc::termios>) -> ::std::io::Result<String> {
     Ok(password)
 }
 
+fn read_text(tty: Option<libc::termios>) -> ::std::io::Result<String> {
+    let mut text = String::new();
+
+    if let Some(termios) = tty {
+        info!("read_text() :: TTY");
+
+        unsafe { tcsetattr(STDIN_FILENO, TCSANOW, &termios) };
+
+        io::stdin().read_line(&mut text)?;
+    } else {
+        info!("read_text() :: NOT A TTY");
+        io::stdin().read_to_string(&mut text)?;
+    }
+
+    trim_newlines(&mut text);
+
+    Ok(text)
+}
+
 fn reset_impl(termios: Option<libc::termios>) {
     if let Some(termios) = termios {
         unsafe { tcsetattr(STDIN_FILENO, TCSANOW, &termios) };
     }
 }
 
-fn trim_newlines(password: &mut String) {
-    while password.ends_with(['\n', '\r'].as_ref()) {
-        password.pop();
+fn trim_newlines(text: &mut String) {
+    while text.ends_with(['\n', '\r'].as_ref()) {
+        text.pop();
     }
 }

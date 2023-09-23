@@ -22,7 +22,7 @@ pub(crate) fn run(args: Args) -> Result<()> {
             // Print password to stdout when pipe used
             // e.g. `kdbx clip example.com | cat`
             if !is_tty(io::stdout()) {
-                put!("{}", entry.password()?);
+                put!("{} ", entry.password()?);
                 return Ok(());
             }
 
