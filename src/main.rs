@@ -2,6 +2,7 @@
 mod utils;
 mod clipboard;
 mod commands;
+mod keepass;
 mod keyring;
 mod pwd;
 mod stdin;
@@ -93,7 +94,7 @@ fn main() {
         Command::Clip => commands::clip::run(args),
         Command::Show => commands::show::run(args),
         Command::Init => commands::init::run(args),
-        Command::Add => todo!(),
+        Command::Add => commands::add::run(args),
         Command::Unknown(cmd) => {
             Err(format!("Unknown command `{}`. Use `--help` to get more info.", cmd).into())
         }

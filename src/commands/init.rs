@@ -3,6 +3,9 @@ use keepass::{db::Database, DatabaseKey};
 use std::{fs::File, io::Read};
 
 pub(crate) fn run(args: Args) -> Result<()> {
+    if args.flag_database.as_deref().unwrap().exists() {
+        return Err("File exists".to_string().into());
+    }
     let password = read_password("Password: ");
     let confirm = read_password("Confirm: ");
     if password != confirm {

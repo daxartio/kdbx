@@ -4,6 +4,9 @@ use crate::{
 };
 
 pub(crate) fn run(args: Args) -> Result<()> {
+    if !args.flag_database.as_deref().unwrap().exists() {
+        return Err("File does not exist".to_string().into());
+    }
     let db = open_database(
         args.flag_database.as_deref().unwrap(),
         args.flag_key_file.as_deref(),
