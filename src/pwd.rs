@@ -2,7 +2,7 @@ use log::*;
 
 use std::{convert::AsRef, ops::Deref, ptr, sync::atomic};
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone)]
 pub struct Pwd(String);
 
 impl From<String> for Pwd {
