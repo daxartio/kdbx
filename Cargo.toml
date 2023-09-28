@@ -22,8 +22,7 @@ atty = "0.2"
 ctrlc = { version = "3.4", features = ["termination"] }
 docopt = "1"
 env_logger = "0.10"
-kdbx4 = "0.5"
-keepass = { version = "0.6.1", features = ["save_kdbx4"]}
+keepass = { version = "0.6.1", features = ["save_kdbx4", "totp"]}
 libc = "0.2"
 log = { version = "0.4", features = ["max_level_trace", "release_max_level_warn"] }
 once_cell = "1.18"

@@ -67,6 +67,8 @@ Examples:
       $ cat /mnt/usb/key | kdbx
 ```
 
+**Please take a backup of your database before updating the application.**
+
 ## License
 
 MIT

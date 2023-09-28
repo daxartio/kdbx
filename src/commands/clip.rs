@@ -1,7 +1,9 @@
 use crate::clipboard::set_clipboard;
-use crate::utils::{is_tty, open_database, skim};
+use crate::keepass::open_database;
+use crate::utils::{get_entries, is_tty, skim};
 use crate::{Args, Result, CANCEL, CANCEL_RQ_FREQ};
 
+use keepass::db::{Entry, NodeRef};
 use log::*;
 
 use std::io;
@@ -12,23 +14,23 @@ pub(crate) fn run(args: Args) -> Result<()> {
     if !args.flag_database.as_deref().unwrap().exists() {
         return Err("File does not exist".to_string().into());
     }
-    let db = open_database(
+    let (db, _) = open_database(
         args.flag_database.as_deref().unwrap(),
         args.flag_key_file.as_deref(),
         args.flag_use_keyring,
-    )?;
+    );
+    let db = db?;
 
     let query = args.arg_entry.as_ref().map(String::as_ref);
 
     if let Some(query) = query {
-        if let [entry] = db.find(query).as_slice() {
+        if let Some(NodeRef::Entry(entry)) = db.root.get(&[query]) {
             // Print password to stdout when pipe used
             // e.g. `kdbx clip example.com | cat`
             if !is_tty(io::stdout()) {
-                put!("{} ", entry.password()?);
+                put!("{} ", entry.get_password().unwrap_or_default());
                 return Ok(());
             }
-
             return clip(entry, args.flag_timeout);
         }
     }
@@ -40,7 +42,7 @@ pub(crate) fn run(args: Args) -> Result<()> {
     }
 
     if let Some(entry) = skim(
-        &db.entries(),
+        &get_entries(&db.root, "".to_string()),
         query,
         args.flag_no_group,
         args.flag_preview,
@@ -52,13 +54,13 @@ pub(crate) fn run(args: Args) -> Result<()> {
     Ok(())
 }
 
-fn clip<'a>(entry: &'a kdbx4::Entry<'a>, timeout: Option<u8>) -> Result<()> {
-    let pwd = entry.password()?;
+fn clip(entry: &Entry, timeout: Option<u8>) -> Result<()> {
+    let pwd = entry.get_password().unwrap();
 
-    if set_clipboard(Some(pwd)).is_err() {
+    if set_clipboard(Some(pwd.to_string())).is_err() {
         return Err(format!(
             "Clipboard unavailable. Try use STDOUT, i.e. `kdbx clip '{}' | cat`.",
-            entry.title()
+            entry.get_title().unwrap_or_default()
         )
         .into());
     }

@@ -1,15 +1,7 @@
-use crate::keyring::Keyring;
-use crate::Result;
-use crate::STDIN;
-
-use kdbx4::{CompositeKey, Database, Entry, Kdbx4};
+use keepass::db::{Entry, Group, Node};
 use skim::prelude::*;
 
-use log::*;
-
 use std::borrow::Cow;
-use std::io;
-use std::path::Path;
 
 #[macro_export]
 macro_rules! put {
@@ -38,66 +30,13 @@ macro_rules! werr {
     });
 }
 
-pub fn open_database(dbfile: &Path, keyfile: Option<&Path>, use_keyring: bool) -> Result<Database> {
-    let keyring = if use_keyring {
-        Keyring::from_db_path(dbfile).map(|k| {
-            debug!("keyring: {}", k);
-            k
-        })
-    } else {
-        None
-    };
-
-    // Try to open DB with a key from keyring
-    if let Some(Ok(pwd)) = keyring.as_ref().map(|k| k.get_password()) {
-        let key = CompositeKey::new(Some(&pwd), keyfile)?;
-        if let Ok(db) = Kdbx4::open(dbfile, key) {
-            return Ok(db);
-        }
-
-        warn!("removing wrong password in the keyring");
-        let _ = keyring.as_ref().map(|k| k.delete_password());
-    }
-
-    // Try read password from pipe
-    if !is_tty(io::stdin()) {
-        let pwd = STDIN.read_password();
-        let key = CompositeKey::new(Some(&pwd), keyfile)?;
-        let db = Kdbx4::open(dbfile, key)?;
-        return Ok(db);
-    }
-
-    // Allow multiple attempts to enter the password from TTY
-    let mut att = 3;
-    loop {
-        put!("Password: ");
-
-        let pwd = STDIN.read_password();
-        let key = CompositeKey::new(Some(&pwd), keyfile)?;
-        let db = Kdbx4::open(dbfile, key);
-
-        // If opened successfully store the password
-        if db.is_ok() {
-            let _ = keyring.as_ref().map(|k| k.set_password(&pwd));
-        }
-
-        att -= 1;
-
-        if db.is_ok() || att == 0 {
-            break db.map_err(From::from);
-        }
-
-        wout!("{} attempt(s) left.", att);
-    }
-}
-
 pub fn skim<'a>(
-    entries: &'a [Entry<'a>],
-    query: Option<&'a str>,
+    entries: &[WrappedEntry<'a>],
+    query: Option<&str>,
     hide_groups: bool,
     show_preview: bool,
     full_screen: bool,
-) -> Option<&'a Entry<'a>> {
+) -> Option<&'a Entry> {
     let opts = SkimOptionsBuilder::default()
         .multi(false)
         .reverse(true)
@@ -124,13 +63,21 @@ pub fn skim<'a>(
         .enumerate()
         .map(|(idx, e)| {
             let title = if hide_groups {
-                e.title().to_owned()
+                e.entry.get_title().unwrap_or_default().to_owned()
             } else {
-                format!("/{}/{}", e.group(), e.title())
+                format!(
+                    "{}/{}",
+                    e.path,
+                    e.entry.get_title().unwrap_or_default().to_owned(),
+                )
             };
 
             let props = if show_preview {
-                Some(format!("{}", e))
+                Some(format!(
+                    "{} {}",
+                    e.entry.get_title().unwrap_or_default(),
+                    e.entry.get_username().unwrap_or_default()
+                ))
             } else {
                 None
             };
@@ -151,7 +98,7 @@ pub fn skim<'a>(
                     .as_ref()
                     .as_any()
                     .downcast_ref::<EntryItem>()
-                    .map(|ei| &entries[ei.idx])
+                    .map(|ei: &EntryItem| entries[ei.idx].entry)
             }
         })
         .unwrap()
@@ -179,4 +126,25 @@ impl SkimItem for EntryItem {
 
 pub fn is_tty(fd: impl std::os::unix::io::AsRawFd) -> bool {
     unsafe { ::libc::isatty(fd.as_raw_fd()) == 1 }
+}
+
+pub fn get_entries(group: &Group, path: String) -> Vec<WrappedEntry<'_>> {
+    let mut entries = vec![];
+    group.children.iter().for_each(|v| match v {
+        Node::Entry(entry) => entries.push(WrappedEntry {
+            path: format!("{}/{}", path, group.name),
+            entry,
+        }),
+        Node::Group(child) => {
+            if !child.children.is_empty() {
+                entries.extend(get_entries(child, format!("{}/{}", path, group.name)))
+            }
+        }
+    });
+    entries
+}
+
+pub struct WrappedEntry<'a> {
+    path: String,
+    entry: &'a Entry,
 }
