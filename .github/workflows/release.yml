@@ -1,0 +1,58 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "*"
+  workflow_dispatch:
+
+jobs:
+  release:
+    name: Release
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            target: x86_64-unknown-linux-musl
+          - os: ubuntu-22.04
+            target: aarch64-unknown-linux-musl
+            container: ghcr.io/cross-rs/aarch64-unknown-linux-musl:edge
+          - os: windows-2022
+            target: x86_64-pc-windows-msvc
+          - os: macOS-12
+            target: x86_64-apple-darwin
+          - os: macOS-12
+            target: aarch64-apple-darwin
+    runs-on: ${{ matrix.os }}
+    container: ${{ matrix.container }}
+    steps:
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          target: ${{ matrix.target }}
+      - name: Install musl tools
+        if: matrix.target == 'x86_64-unknown-linux-musl'
+        run: |
+          sudo apt install -y musl-tools
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: cargo fetch
+        run: cargo fetch --target ${{ matrix.target }}
+      - name: Release build
+        run: cargo build --release --target ${{ matrix.target }}
+      - name: Package
+        shell: bash
+        env:
+          NAME: kdbx
+          TARGET: ${{ matrix.target }}
+        run: .github/scripts/package.sh
+      - name: Publish
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: true
+          files: "kdbx*"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
