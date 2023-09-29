@@ -70,8 +70,11 @@ Options:
   -k, --key-file <KEY_FILE>    Path to the key file unlocking the database
   -h, --help                   Print help
   -V, --version                Print version
-    Finished dev [unoptimized + debuginfo] target(s) in 0.21s
-     Running `target/debug/kdbx add -h`
+```
+
+### add
+
+```
 Add new entry
 
 Usage: kdbx add [OPTIONS] --database <DATABASE>
