@@ -19,7 +19,7 @@ else
 fi
 
 cp "target/$TARGET/release/$bin" "$release_name/"
-cp README.md LICENSE-APACHE LICENSE-MIT "$release_name/"
+cp README.md LICENSE "$release_name/"
 tar czf "$release_tar" "$release_name"
 
 rm -r "$release_name"
