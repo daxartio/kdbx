@@ -1,23 +1,62 @@
 use crate::clipboard::set_clipboard;
 use crate::keepass::open_database;
 use crate::utils::{get_entries, is_tty, skim};
-use crate::{Args, Result, CANCEL, CANCEL_RQ_FREQ};
+use crate::{Result, CANCEL, CANCEL_RQ_FREQ};
 
 use keepass::db::{Entry, NodeRef};
 use log::*;
 
 use std::io;
+use std::path::PathBuf;
 use std::thread;
 use std::time;
 
+#[derive(clap::Args)]
+pub struct Args {
+    arg_entry: Option<String>,
+
+    /// Timeout in seconds before clearing the clipboard. 0 means no clean-up
+    #[arg(short, long, default_value_t = crate::DEFAULT_TIMEOUT)]
+    timeout: u8,
+
+    /// Show entries without group(s)
+    #[arg(short = 'G', long)]
+    no_group: bool,
+
+    /// Preview entry during picking
+    #[arg(short = 'v', long)]
+    preview: bool,
+
+    /// Use all available screen for picker
+    #[arg(short, long)]
+    full_screen: bool,
+
+    /// Store password for the database in the OS's keyring
+    #[arg(short = 'p', long)]
+    use_keyring: bool,
+
+    /// Remove database's password from OS's keyring and exit
+    #[arg(short = 'P', long)]
+    remove_key: bool,
+
+    /// KDBX file path
+    #[arg(short, long)]
+    database: PathBuf,
+
+    /// Path to the key file unlocking the database
+    #[arg(short, long)]
+    key_file: Option<PathBuf>,
+}
+
 pub(crate) fn run(args: Args) -> Result<()> {
-    if !args.flag_database.as_deref().unwrap().exists() {
+    if !args.database.exists() {
         return Err("File does not exist".to_string().into());
     }
     let (db, _) = open_database(
-        args.flag_database.as_deref().unwrap(),
-        args.flag_key_file.as_deref(),
-        args.flag_use_keyring,
+        &args.database,
+        args.key_file.as_deref(),
+        args.use_keyring,
+        args.remove_key,
     );
     let db = db?;
 
@@ -28,10 +67,10 @@ pub(crate) fn run(args: Args) -> Result<()> {
             // Print password to stdout when pipe used
             // e.g. `kdbx clip example.com | cat`
             if !is_tty(io::stdout()) {
-                put!("{} ", entry.get_password().unwrap_or_default());
+                put!("{}\n", entry.get_password().unwrap_or_default());
                 return Ok(());
             }
-            return clip(entry, args.flag_timeout);
+            return clip(entry, args.timeout);
         }
     }
 
@@ -44,17 +83,17 @@ pub(crate) fn run(args: Args) -> Result<()> {
     if let Some(entry) = skim(
         &get_entries(&db.root, "".to_string()),
         query,
-        args.flag_no_group,
-        args.flag_preview,
-        args.flag_full_screen,
+        args.no_group,
+        args.preview,
+        args.full_screen,
     ) {
-        clip(entry, args.flag_timeout)?
+        clip(entry, args.timeout)?
     }
 
     Ok(())
 }
 
-fn clip(entry: &Entry, timeout: Option<u8>) -> Result<()> {
+fn clip(entry: &Entry, timeout: u8) -> Result<()> {
     let pwd = entry.get_password().unwrap();
 
     if set_clipboard(Some(pwd.to_string())).is_err() {
@@ -65,12 +104,12 @@ fn clip(entry: &Entry, timeout: Option<u8>) -> Result<()> {
         .into());
     }
 
-    if timeout.is_none() {
+    if timeout == 0 {
         debug!("user decided to leave the password in the buffer");
         return Ok(());
     }
 
-    let mut ticks = u64::from(timeout.unwrap()) * CANCEL_RQ_FREQ;
+    let mut ticks = u64::from(timeout) * CANCEL_RQ_FREQ;
     while !CANCEL.load(std::sync::atomic::Ordering::SeqCst) && ticks > 0 {
         if ticks % CANCEL_RQ_FREQ == 0 {
             // Note extra space after the "seconds...":

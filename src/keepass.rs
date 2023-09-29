@@ -29,7 +29,16 @@ pub fn open_database(
     dbfile: &Path,
     keyfile: Option<&Path>,
     use_keyring: bool,
+    remove_key: bool,
 ) -> (Result<Database, DatabaseOpenError>, Pwd) {
+    if remove_key {
+        if let Some(keyring) = Keyring::from_db_path(dbfile) {
+            if let Err(msg) = keyring.delete_password() {
+                werr!("No key removed for `{}`. {}", dbfile.to_string_lossy(), msg);
+            }
+        }
+    }
+
     let keyring = if use_keyring {
         Keyring::from_db_path(dbfile).map(|k| {
             debug!("keyring: {}", k);

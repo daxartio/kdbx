@@ -1,9 +1,20 @@
-use crate::{pwd::Pwd, Args, Result, STDIN};
+use crate::{pwd::Pwd, Result, STDIN};
 use keepass::{db::Database, DatabaseKey};
-use std::{fs::File, io::Read};
+use std::{fs::File, io::Read, path::PathBuf};
+
+#[derive(clap::Args)]
+pub struct Args {
+    /// KDBX file path
+    #[arg(short, long)]
+    database: PathBuf,
+
+    /// Path to the key file unlocking the database
+    #[arg(short, long)]
+    key_file: Option<PathBuf>,
+}
 
 pub(crate) fn run(args: Args) -> Result<()> {
-    if args.flag_database.as_deref().unwrap().exists() {
+    if args.database.exists() {
         return Err("File exists".to_string().into());
     }
     let password = read_password("Password: ");
@@ -23,14 +34,11 @@ pub(crate) fn run(args: Args) -> Result<()> {
 
     db.meta.database_name = Some(database_name);
 
-    let mut keyfile = args.flag_key_file.and_then(|f| File::open(f).ok());
+    let mut keyfile = args.key_file.and_then(|f| File::open(f).ok());
     let keyfile = keyfile.as_mut().map(|kf| kf as &mut dyn Read);
     let key = DatabaseKey { password, keyfile };
 
-    db.save(
-        &mut File::create(args.flag_database.as_deref().unwrap())?,
-        key,
-    )?;
+    db.save(&mut File::create(args.database)?, key)?;
 
     Ok(())
 }

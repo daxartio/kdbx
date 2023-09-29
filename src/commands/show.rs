@@ -1,19 +1,56 @@
+use std::path::PathBuf;
+
 use keepass::db::NodeRef;
 
 use crate::{
     keepass::open_database,
     utils::{get_entries, skim},
-    Args, Result,
+    Result,
 };
 
+#[derive(clap::Args)]
+pub struct Args {
+    #[arg(long)]
+    arg_entry: Option<String>,
+
+    /// Show entries without group(s)
+    #[arg(short = 'G', long)]
+    no_group: bool,
+
+    /// Preview entry during picking
+    #[arg(short = 'v', long)]
+    preview: bool,
+
+    /// Use all available screen for picker
+    #[arg(short, long)]
+    full_screen: bool,
+
+    /// Store password for the database in the OS's keyring
+    #[arg(short = 'p', long)]
+    use_keyring: bool,
+
+    /// Remove database's password from OS's keyring and exit
+    #[arg(short = 'P', long)]
+    remove_key: bool,
+
+    /// KDBX file path
+    #[arg(short, long)]
+    database: PathBuf,
+
+    /// Path to the key file unlocking the database
+    #[arg(short, long)]
+    key_file: Option<PathBuf>,
+}
+
 pub(crate) fn run(args: Args) -> Result<()> {
-    if !args.flag_database.as_deref().unwrap().exists() {
+    if !args.database.exists() {
         return Err("File does not exist".to_string().into());
     }
     let (db, _) = open_database(
-        args.flag_database.as_deref().unwrap(),
-        args.flag_key_file.as_deref(),
-        args.flag_use_keyring,
+        &args.database,
+        args.key_file.as_deref(),
+        args.use_keyring,
+        args.remove_key,
     );
     let db = db?;
     let query = args.arg_entry.as_ref().map(String::as_ref);
@@ -33,9 +70,9 @@ pub(crate) fn run(args: Args) -> Result<()> {
     if let Some(entry) = skim(
         &get_entries(&db.root, "".to_string()),
         query,
-        args.flag_no_group,
-        args.flag_preview,
-        args.flag_full_screen,
+        args.no_group,
+        args.preview,
+        args.full_screen,
     ) {
         put!(
             "Title: {}\nUserName: {}\nUrl: {}\n",

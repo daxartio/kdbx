@@ -1,5 +1,7 @@
 # Keepass CLI
 
+A secure hole for your passwords (Keepass CLI)
+
 ## Install
 
 ```
@@ -8,63 +10,109 @@ cargo install kdbx
 
 ## Usage
 
+### commands
+
 ```
-$ kdbx --help
+A secure hole for your passwords (Keepass CLI)
 
-kdbx 0.0.0
-    KeePass KDBX4 password reader.
-
-Usage:
-    kdbx [options] [<command>] [<entry>]
-    kdbx --help
+Usage: kdbx [COMMAND]
 
 Commands:
-    clip     Copy password and clear clipboard after specified amount of time.
-             This is default command if no other provided. Alias `c`.
-
-    info     Display entry's info. Alias `show`, `s`, `i`.
-
-    add      Add new entry. Alias `a`.
-
-    init     Init new database.
+  clip  Copy password and clear clipboard after specified amount of time
+  show  Display entry's info
+  add   Add new entry
+  init  Init new database
+  help  Print this message or the help of the given subcommand(s)
 
 Options:
-    -d, --database <file>       KDBX file path.
-    -k, --key-file <keyfile>    Path to the key file unlocking the database.
-    -p, --use-keyring           Store password for the database in the OS's keyring.
-    -P, --remove-key            Remove database's password from OS's keyring and exit.
-    -G, --no-group              Show entries without group(s).
-    -v, --preview               Preview entry during picking.
-    -f, --full-screen           Use all available screen for picker.
-    -t, --timeout <seconds>     Timeout in seconds before clearing the clipboard.
-                                Default to 15 seconds. 0 means no clean-up.
-    -h, --help
-    -V, --version
+  -h, --help     Print help
+  -V, --version  Print version
+```
 
-Environment variables:
-    KDBX_DEFAULTS                 Set default arguments (see examples).
+### clip
 
-Examples:
-    Open a database and copy password to the clipboard after selection:
-      $ kdbx --database /root/secrets.kdbx
+```
+Copy password and clear clipboard after specified amount of time
 
-    Set default database, secret file and options via environment variable:
-      export KDBX_DEFAULTS="-d$HOME/my.kdbx -k$HOME/.secret -pGt7"
+Usage: kdbx clip [OPTIONS] --database <DATABASE> [ARG_ENTRY]
 
-    Display selector and then print entry's info:
-      $ kdbx show
+Arguments:
+  [ARG_ENTRY]
 
-    Copy password if only single entry found otherwise display selector:
-      $ kdbx clip gmail
+Options:
+  -t, --timeout <TIMEOUT>    Timeout in seconds before clearing the clipboard. 0 means no clean-up [default: 15]
+  -G, --no-group             Show entries without group(s)
+  -v, --preview              Preview entry during picking
+  -f, --full-screen          Use all available screen for picker
+  -p, --use-keyring          Store password for the database in the OS's keyring
+  -P, --remove-key           Remove database's password from OS's keyring and exit
+  -d, --database <DATABASE>  KDBX file path
+  -k, --key-file <KEY_FILE>  Path to the key file unlocking the database
+  -h, --help                 Print help
+  -V, --version              Print version
+```
 
-    `clip` command name can be omitted:
-      $ kdbx gmail
+### show
 
-    Print password to STDOUT:
-      $ kdbx github.com | cat
+```
+Display entry's info
 
-    Read password from STDIN:
-      $ cat /mnt/usb/key | kdbx
+Usage: kdbx show [OPTIONS] --database <DATABASE>
+
+Options:
+      --arg-entry <ARG_ENTRY>
+  -G, --no-group               Show entries without group(s)
+  -v, --preview                Preview entry during picking
+  -f, --full-screen            Use all available screen for picker
+  -p, --use-keyring            Store password for the database in the OS's keyring
+  -P, --remove-key             Remove database's password from OS's keyring and exit
+  -d, --database <DATABASE>    KDBX file path
+  -k, --key-file <KEY_FILE>    Path to the key file unlocking the database
+  -h, --help                   Print help
+  -V, --version                Print version
+    Finished dev [unoptimized + debuginfo] target(s) in 0.21s
+     Running `target/debug/kdbx add -h`
+Add new entry
+
+Usage: kdbx add [OPTIONS] --database <DATABASE>
+
+Options:
+  -p, --use-keyring          Store password for the database in the OS's keyring
+  -P, --remove-key           Remove database's password from OS's keyring and exit
+  -d, --database <DATABASE>  KDBX file path
+  -k, --key-file <KEY_FILE>  Path to the key file unlocking the database
+  -h, --help                 Print help
+  -V, --version              Print version
+```
+
+### init
+
+```
+Init new database
+
+Usage: kdbx init [OPTIONS] --database <DATABASE>
+
+Options:
+  -d, --database <DATABASE>  KDBX file path
+  -k, --key-file <KEY_FILE>  Path to the key file unlocking the database
+  -h, --help                 Print help
+  -V, --version              Print version
+```
+
+### Examples
+
+```
+Display selector and then print entry's info:
+  $ kdbx show
+
+Copy password if only single entry found otherwise display selector:
+  $ kdbx clip gmail
+
+Print password to STDOUT:
+  $ kdbx clip github.com | cat
+
+Read password from STDIN:
+  $ cat /mnt/usb/key | kdbx clip
 ```
 
 **Please take a backup of your database before updating the application.**
