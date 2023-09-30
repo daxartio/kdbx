@@ -1,23 +1,16 @@
 use crate::clipboard::set_clipboard;
 use crate::keepass::open_database;
 use crate::utils::{get_entries, is_tty, skim};
-use crate::{Result, CANCEL, CANCEL_RQ_FREQ};
+use crate::Result;
 
 use keepass::db::{Entry, NodeRef};
-use log::*;
 
 use std::io;
 use std::path::PathBuf;
-use std::thread;
-use std::time;
 
 #[derive(clap::Args)]
 pub struct Args {
     entry: Option<String>,
-
-    /// Timeout in seconds before clearing the clipboard. 0 means no clean-up
-    #[arg(short, long, default_value_t = crate::DEFAULT_TIMEOUT)]
-    timeout: u8,
 
     /// Show entries without group(s)
     #[arg(short = 'G', long)]
@@ -26,6 +19,10 @@ pub struct Args {
     /// Preview entry during picking
     #[arg(short = 'v', long)]
     preview: bool,
+
+    /// Show the secret instead of code
+    #[arg(long)]
+    raw: bool,
 
     /// Use all available screen for picker
     #[arg(short, long)]
@@ -65,12 +62,12 @@ pub(crate) fn run(args: Args) -> Result<()> {
     if let Some(query) = query {
         if let Some(NodeRef::Entry(entry)) = db.root.get(&[query]) {
             // Print password to stdout when pipe used
-            // e.g. `kdbx clip example.com | cat`
+            // e.g. `kdbx totp example.com | cat`
             if !is_tty(io::stdout()) {
-                put!("{}\n", entry.get_password().unwrap_or_default());
+                put!("{}\n", get_totp(entry, args.raw));
                 return Ok(());
             }
-            return clip(entry, args.timeout);
+            return clip(entry, args.raw);
         }
     }
 
@@ -86,18 +83,16 @@ pub(crate) fn run(args: Args) -> Result<()> {
         args.no_group,
         args.preview,
         args.full_screen,
-        false,
+        true,
     ) {
-        clip(entry, args.timeout)?
+        clip(entry, args.raw)?
     }
 
     Ok(())
 }
 
-fn clip(entry: &Entry, timeout: u8) -> Result<()> {
-    let pwd = entry.get_password().unwrap();
-
-    if set_clipboard(Some(pwd.to_string())).is_err() {
+fn clip(entry: &Entry, raw: bool) -> Result<()> {
+    if set_clipboard(Some(get_totp(entry, raw))).is_err() {
         return Err(format!(
             "Clipboard unavailable. Try use STDOUT, i.e. `kdbx clip '{}' | cat`.",
             entry.get_title().unwrap_or_default()
@@ -105,29 +100,15 @@ fn clip(entry: &Entry, timeout: u8) -> Result<()> {
         .into());
     }
 
-    if timeout == 0 {
-        debug!("user decided to leave the password in the buffer");
-        return Ok(());
-    }
-
-    let mut ticks = u64::from(timeout) * CANCEL_RQ_FREQ;
-    while !CANCEL.load(std::sync::atomic::Ordering::SeqCst) && ticks > 0 {
-        if ticks % CANCEL_RQ_FREQ == 0 {
-            // Note extra space after the "seconds...":
-            // transition from XX digits to X digit
-            // would shift whole line to the left
-            // so extra space's role is to hide a single dot
-            put!(
-                "Copied to the clipboard! Clear in {} seconds... \x0D",
-                ticks / CANCEL_RQ_FREQ
-            );
-        }
-        thread::sleep(time::Duration::from_millis(1_000 / CANCEL_RQ_FREQ));
-        ticks -= 1;
-    }
-
-    let _ = set_clipboard(None);
-    wout!("{:50}", "Wiped out");
-
     Ok(())
+}
+
+fn get_totp(entry: &Entry, raw: bool) -> String {
+    if raw {
+        return entry.get_raw_otp_value().unwrap_or_default().to_string();
+    }
+    entry
+        .get_otp()
+        .map(|v| v.value_now().map(|otpcode| otpcode.code).unwrap())
+        .unwrap_or_default()
 }

@@ -4,14 +4,13 @@ use keepass::db::NodeRef;
 
 use crate::{
     keepass::open_database,
-    utils::{get_entries, skim},
+    utils::{get_entries, show_entry, skim},
     Result,
 };
 
 #[derive(clap::Args)]
 pub struct Args {
-    #[arg(long)]
-    arg_entry: Option<String>,
+    entry: Option<String>,
 
     /// Show entries without group(s)
     #[arg(short = 'G', long)]
@@ -53,16 +52,11 @@ pub(crate) fn run(args: Args) -> Result<()> {
         args.remove_key,
     );
     let db = db?;
-    let query = args.arg_entry.as_ref().map(String::as_ref);
+    let query = args.entry.as_ref().map(String::as_ref);
 
     if let Some(query) = query {
         if let Some(NodeRef::Entry(entry)) = db.root.get(&[query]) {
-            put!(
-                "Title: {}\nUserName: {}\nUrl: {}\n",
-                entry.get_title().unwrap_or_default(),
-                entry.get_username().unwrap_or_default(),
-                entry.get_url().unwrap_or_default(),
-            );
+            put!("{}", show_entry(entry));
             return Ok(());
         }
     }
@@ -73,13 +67,9 @@ pub(crate) fn run(args: Args) -> Result<()> {
         args.no_group,
         args.preview,
         args.full_screen,
+        false,
     ) {
-        put!(
-            "Title: {}\nUserName: {}\nUrl: {}\n",
-            entry.get_title().unwrap_or_default(),
-            entry.get_username().unwrap_or_default(),
-            entry.get_url().unwrap_or_default(),
-        );
+        put!("{}", show_entry(entry));
         return Ok(());
     }
 

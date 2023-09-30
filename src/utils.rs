@@ -36,6 +36,7 @@ pub fn skim<'a>(
     hide_groups: bool,
     show_preview: bool,
     full_screen: bool,
+    with_totp: bool,
 ) -> Option<&'a Entry> {
     let opts = SkimOptionsBuilder::default()
         .multi(false)
@@ -58,6 +59,17 @@ pub fn skim<'a>(
 
     let (tx, rx): (SkimItemSender, SkimItemReceiver) = unbounded();
 
+    let entries = entries
+        .iter()
+        .filter(|e| {
+            if with_totp {
+                e.entry.get_raw_otp_value().is_some()
+            } else {
+                true
+            }
+        })
+        .collect::<Vec<_>>();
+
     entries
         .iter()
         .enumerate()
@@ -73,11 +85,7 @@ pub fn skim<'a>(
             };
 
             let props = if show_preview {
-                Some(format!(
-                    "{} {}",
-                    e.entry.get_title().unwrap_or_default(),
-                    e.entry.get_username().unwrap_or_default()
-                ))
+                Some(show_entry(e.entry))
             } else {
                 None
             };
@@ -122,6 +130,16 @@ impl SkimItem for EntryItem {
             ItemPreview::Global
         }
     }
+}
+
+pub fn show_entry(entry: &Entry) -> String {
+    format!(
+        "Title: {}\nUserName: {}\nUrl: {}\nNote: {}\n",
+        entry.get_title().unwrap_or_default(),
+        entry.get_username().unwrap_or_default(),
+        entry.get_url().unwrap_or_default(),
+        entry.get("Notes").unwrap_or_default(),
+    )
 }
 
 pub fn is_tty(fd: impl std::os::unix::io::AsRawFd) -> bool {

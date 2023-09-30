@@ -34,10 +34,10 @@ Options:
 ```
 Copy password and clear clipboard after specified amount of time
 
-Usage: kdbx clip [OPTIONS] --database <DATABASE> [ARG_ENTRY]
+Usage: kdbx clip [OPTIONS] --database <DATABASE> [ENTRY]
 
 Arguments:
-  [ARG_ENTRY]
+  [ENTRY]
 
 Options:
   -t, --timeout <TIMEOUT>    Timeout in seconds before clearing the clipboard. 0 means no clean-up [default: 15]
@@ -52,24 +52,49 @@ Options:
   -V, --version              Print version
 ```
 
+### totp
+
+```
+Copy totp
+
+Usage: kdbx totp [OPTIONS] --database <DATABASE> [ENTRY]
+
+Arguments:
+  [ENTRY]
+
+Options:
+  -G, --no-group             Show entries without group(s)
+  -v, --preview              Preview entry during picking
+      --raw                  Show the secret instead of code
+  -f, --full-screen          Use all available screen for picker
+  -p, --use-keyring          Store password for the database in the OS's keyring
+  -P, --remove-key           Remove database's password from OS's keyring and exit
+  -d, --database <DATABASE>  KDBX file path
+  -k, --key-file <KEY_FILE>  Path to the key file unlocking the database
+  -h, --help                 Print help
+  -V, --version              Print version
+```
+
 ### show
 
 ```
 Display entry's info
 
-Usage: kdbx show [OPTIONS] --database <DATABASE>
+Usage: kdbx show [OPTIONS] --database <DATABASE> [ENTRY]
+
+Arguments:
+  [ENTRY]
 
 Options:
-      --arg-entry <ARG_ENTRY>
-  -G, --no-group               Show entries without group(s)
-  -v, --preview                Preview entry during picking
-  -f, --full-screen            Use all available screen for picker
-  -p, --use-keyring            Store password for the database in the OS's keyring
-  -P, --remove-key             Remove database's password from OS's keyring and exit
-  -d, --database <DATABASE>    KDBX file path
-  -k, --key-file <KEY_FILE>    Path to the key file unlocking the database
-  -h, --help                   Print help
-  -V, --version                Print version
+  -G, --no-group             Show entries without group(s)
+  -v, --preview              Preview entry during picking
+  -f, --full-screen          Use all available screen for picker
+  -p, --use-keyring          Store password for the database in the OS's keyring
+  -P, --remove-key           Remove database's password from OS's keyring and exit
+  -d, --database <DATABASE>  KDBX file path
+  -k, --key-file <KEY_FILE>  Path to the key file unlocking the database
+  -h, --help                 Print help
+  -V, --version              Print version
 ```
 
 ### add
