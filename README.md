@@ -1,8 +1,14 @@
 # Keepass CLI
 
+[![Crates.io](https://img.shields.io/crates/v/kdbx.svg)](https://crates.io/crates/kdbx)
+
 A secure hole for your passwords (Keepass CLI)
 
 ## Install
+
+[Download](https://github.com/daxartio/kdbx/releases)
+
+or
 
 ```
 cargo install kdbx
@@ -19,6 +25,7 @@ Usage: kdbx [COMMAND]
 
 Commands:
   clip  Copy password and clear clipboard after specified amount of time
+  totp  Copy totp
   show  Display entry's info
   add   Add new entry
   init  Init new database
