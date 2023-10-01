@@ -130,7 +130,7 @@ impl SkimItem for EntryItem {
 
 pub fn show_entry(entry: &Entry) -> String {
     format!(
-        "Title: {}\nUserName: {}\nUrl: {}\nNote: {}\n",
+        "Title: {}\nUserName: {}\nUrl: {}\nNote: {}",
         entry.get_title().unwrap_or_default(),
         entry.get_username().unwrap_or_default(),
         entry.get_url().unwrap_or_default(),

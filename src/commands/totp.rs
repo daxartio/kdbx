@@ -64,7 +64,7 @@ pub(crate) fn run(args: Args) -> Result<()> {
             // Print password to stdout when pipe used
             // e.g. `kdbx totp example.com | cat`
             if !is_tty(io::stdout()) {
-                put!("{}\n", get_totp(entry, args.raw));
+                put!("{}", get_totp(entry, args.raw));
                 return Ok(());
             }
             return clip(entry, args.raw);
