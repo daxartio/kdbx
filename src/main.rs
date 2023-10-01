@@ -32,13 +32,12 @@ fn main() {
     let cli = Cli::parse();
 
     if let Err(err) = match cli.command {
-        Some(Commands::Clip(args)) => commands::clip::run(args),
-        Some(Commands::Totp(args)) => commands::totp::run(args),
-        Some(Commands::Show(args)) => commands::show::run(args),
-        Some(Commands::Init(args)) => commands::init::run(args),
-        Some(Commands::Add(args)) => commands::add::run(args),
-        Some(Commands::List(args)) => commands::list::run(args),
-        None => Ok(()),
+        Commands::Clip(args) => commands::clip::run(args),
+        Commands::Totp(args) => commands::totp::run(args),
+        Commands::Show(args) => commands::show::run(args),
+        Commands::Init(args) => commands::init::run(args),
+        Commands::Add(args) => commands::add::run(args),
+        Commands::List(args) => commands::list::run(args),
     } {
         werr!("{}", err);
         process::exit(1);
@@ -50,7 +49,7 @@ fn main() {
 #[command(propagate_version = true)]
 struct Cli {
     #[command(subcommand)]
-    command: Option<Commands>,
+    command: Commands,
 }
 
 #[derive(Subcommand)]

@@ -19,11 +19,11 @@ pub struct Args {
     remove_key: bool,
 
     /// KDBX file path
-    #[arg(short, long)]
+    #[arg(short, long, env = "KDBX_DATABASE")]
     database: PathBuf,
 
     /// Path to the key file unlocking the database
-    #[arg(short, long)]
+    #[arg(short, long, env = "KDBX_KEY_FILE")]
     key_file: Option<PathBuf>,
 }
 

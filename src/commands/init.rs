@@ -5,11 +5,11 @@ use std::{fs::File, io::Read, path::PathBuf};
 #[derive(clap::Args)]
 pub struct Args {
     /// KDBX file path
-    #[arg(short, long)]
+    #[arg(short, long, env = "KDBX_DATABASE")]
     database: PathBuf,
 
     /// Path to the key file unlocking the database
-    #[arg(short, long)]
+    #[arg(short, long, env = "KDBX_KEY_FILE")]
     key_file: Option<PathBuf>,
 }
 
