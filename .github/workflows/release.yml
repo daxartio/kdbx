@@ -51,5 +51,6 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: "kdbx*"
+          body_path: ./release.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
