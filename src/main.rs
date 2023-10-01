@@ -37,6 +37,7 @@ fn main() {
         Some(Commands::Show(args)) => commands::show::run(args),
         Some(Commands::Init(args)) => commands::init::run(args),
         Some(Commands::Add(args)) => commands::add::run(args),
+        Some(Commands::List(args)) => commands::list::run(args),
         None => Ok(()),
     } {
         werr!("{}", err);
@@ -64,6 +65,8 @@ enum Commands {
     Add(commands::add::Args),
     /// Init new database
     Init(commands::init::Args),
+    /// List all entries
+    List(commands::list::Args),
 }
 
 fn set_ctrlc_handler() {

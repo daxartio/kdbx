@@ -41,7 +41,7 @@ pub(crate) fn run(args: Args) -> Result<()> {
         STDIN.read_text()
     };
     let entry_username = {
-        put!("UserName: ");
+        put!("Username: ");
         STDIN.read_text()
     };
     let entry_password = {

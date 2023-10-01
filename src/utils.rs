@@ -130,7 +130,7 @@ impl SkimItem for EntryItem {
 
 pub fn show_entry(entry: &Entry) -> String {
     format!(
-        "Title: {}\nUserName: {}\nUrl: {}\nNote: {}",
+        "Title: {}\nUsername: {}\nUrl: {}\nNote: {}",
         entry.get_title().unwrap_or_default(),
         entry.get_username().unwrap_or_default(),
         entry.get_url().unwrap_or_default(),
@@ -159,8 +159,8 @@ pub fn get_entries(group: &Group, path: String) -> Vec<WrappedEntry<'_>> {
 }
 
 pub struct WrappedEntry<'a> {
-    path: String,
-    entry: &'a Entry,
+    pub path: String,
+    pub entry: &'a Entry,
 }
 
 impl WrappedEntry<'_> {
