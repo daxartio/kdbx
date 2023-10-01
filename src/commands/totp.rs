@@ -1,9 +1,9 @@
 use crate::clipboard::set_clipboard;
 use crate::keepass::open_database;
-use crate::utils::{get_entries, is_tty, skim};
+use crate::utils::{find_entry, get_entries, is_tty, skim};
 use crate::Result;
 
-use keepass::db::{Entry, NodeRef};
+use keepass::db::Entry;
 
 use std::io;
 use std::path::PathBuf;
@@ -60,7 +60,7 @@ pub(crate) fn run(args: Args) -> Result<()> {
     let query = args.entry.as_ref().map(String::as_ref);
 
     if let Some(query) = query {
-        if let Some(NodeRef::Entry(entry)) = db.root.get(&[query]) {
+        if let Some(entry) = find_entry(query, &db.root) {
             // Print password to stdout when pipe used
             // e.g. `kdbx totp example.com | cat`
             if !is_tty(io::stdout()) {

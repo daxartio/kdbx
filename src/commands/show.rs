@@ -1,10 +1,8 @@
 use std::path::PathBuf;
 
-use keepass::db::NodeRef;
-
 use crate::{
     keepass::open_database,
-    utils::{get_entries, show_entry, skim},
+    utils::{find_entry, get_entries, show_entry, skim},
     Result,
 };
 
@@ -55,7 +53,7 @@ pub(crate) fn run(args: Args) -> Result<()> {
     let query = args.entry.as_ref().map(String::as_ref);
 
     if let Some(query) = query {
-        if let Some(NodeRef::Entry(entry)) = db.root.get(&[query]) {
+        if let Some(entry) = find_entry(query, &db.root) {
             put!("{}", show_entry(entry));
             return Ok(());
         }

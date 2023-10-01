@@ -77,11 +77,7 @@ pub fn skim<'a>(
             let title = if hide_groups {
                 e.entry.get_title().unwrap_or_default().to_owned()
             } else {
-                format!(
-                    "{}/{}",
-                    e.path,
-                    e.entry.get_title().unwrap_or_default().to_owned(),
-                )
+                e.entry_path()
             };
 
             let props = if show_preview {
@@ -165,4 +161,52 @@ pub fn get_entries(group: &Group, path: String) -> Vec<WrappedEntry<'_>> {
 pub struct WrappedEntry<'a> {
     path: String,
     entry: &'a Entry,
+}
+
+impl WrappedEntry<'_> {
+    pub fn entry_path(&self) -> String {
+        format!(
+            "{}/{}",
+            self.path,
+            self.entry.get_title().unwrap_or_default().to_owned(),
+        )
+    }
+}
+
+pub fn find_entry<'a>(query: &str, group: &'a Group) -> Option<&'a Entry> {
+    get_entries(group, "".to_string()).iter().find_map(|e| {
+        let entry_path = e.entry_path();
+        if entry_path.ends_with(query) {
+            Some(e.entry)
+        } else {
+            None
+        }
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    use keepass::db::Value;
+
+    use super::*;
+
+    #[test]
+    fn test_find_entry() {
+        let mut group = Group::new("root");
+        let mut child = Group::new("child");
+        let mut entry = Entry::new();
+        entry.fields.insert(
+            "Title".to_string(),
+            Value::Unprotected("My Title".to_string()),
+        );
+
+        child.children.push(Node::Entry(entry.clone()));
+        group.children.push(Node::Group(child));
+
+        assert_eq!(find_entry("/root/child/My Title", &group), Some(&entry));
+        assert_eq!(find_entry("child/My Title", &group), Some(&entry));
+        assert_eq!(find_entry("My Title", &group), Some(&entry));
+        assert_eq!(find_entry("Title", &group), Some(&entry));
+        assert!(find_entry("My Other Title", &group).is_none());
+    }
 }
