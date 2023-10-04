@@ -3,7 +3,8 @@ name = "cz_conventional_commits"
 version = "0.5.0"
 tag_format = "$version"
 version_files = [
-    "Cargo.toml:version"
+    "Cargo.toml:version",
+    "install.sh"
 ]
 bump_message = "chore(release): version $current_version → $new_version"
 update_changelog_on_bump = true

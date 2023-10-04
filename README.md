@@ -8,10 +8,12 @@ A secure hole for your passwords (Keepass CLI)
 
 [Download](https://github.com/daxartio/kdbx/releases)
 
-or
-
 ```
 cargo install kdbx
+```
+
+```
+curl -fsSL https://raw.githubusercontent.com/daxartio/kdbx/master/install.sh | sh -s
 ```
 
 **Please take a backup of your database before updating the application.**
