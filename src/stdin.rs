@@ -1,5 +1,7 @@
-use std::io::{self, Read};
-use std::mem::MaybeUninit;
+use std::{
+    io::{self, Read},
+    mem::MaybeUninit,
+};
 
 use libc::{isatty, tcgetattr, tcsetattr, ECHO, ECHONL, STDIN_FILENO, TCSANOW};
 use log::*;

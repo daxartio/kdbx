@@ -14,7 +14,7 @@ test:
 
 .PHONY: fmt
 fmt:
-	cargo fmt --all
+	cargo +nightly fmt --all
 
 .PHONY: cli-md
 cli-md:

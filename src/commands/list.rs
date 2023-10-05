@@ -1,8 +1,6 @@
 use std::path::PathBuf;
 
-use crate::keepass::get_entries;
-use crate::utils::open_database_interactively;
-use crate::Result;
+use crate::{keepass::get_entries, utils::open_database_interactively, Result};
 
 #[derive(clap::Args)]
 pub struct Args {

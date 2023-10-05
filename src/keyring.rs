@@ -2,8 +2,7 @@ use crate::pwd::Pwd;
 
 use log::*;
 
-use std::fmt;
-use std::path::Path;
+use std::{fmt, path::Path};
 
 impl Keyring {
     pub fn from_db_path(file: impl AsRef<Path>) -> Option<Self> {

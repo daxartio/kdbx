@@ -1,15 +1,14 @@
-use std::io;
-use std::path::PathBuf;
-use std::thread;
-use std::time;
+use std::{io, path::PathBuf, thread, time};
 
 use keepass::db::Entry;
 use log::*;
 
-use crate::clipboard::set_clipboard;
-use crate::keepass::{find_entry, get_entries};
-use crate::utils::{is_tty, open_database_interactively, skim};
-use crate::{Result, CANCEL, CANCEL_RQ_FREQ};
+use crate::{
+    clipboard::set_clipboard,
+    keepass::{find_entry, get_entries},
+    utils::{is_tty, open_database_interactively, skim},
+    Result, CANCEL, CANCEL_RQ_FREQ,
+};
 
 #[derive(clap::Args)]
 pub struct Args {
