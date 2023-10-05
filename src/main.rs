@@ -32,7 +32,8 @@ fn main() {
     let cli = Cli::parse();
 
     if let Err(err) = match cli.command {
-        Commands::Clip(args) => commands::clip::run(args),
+        Commands::Pwd(args) => commands::pwd::run(args),
+        Commands::Clip(args) => commands::pwd::run(args),
         Commands::Totp(args) => commands::totp::run(args),
         Commands::Show(args) => commands::show::run(args),
         Commands::Init(args) => commands::init::run(args),
@@ -55,7 +56,9 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     /// Copy password and clear clipboard after specified amount of time
-    Clip(commands::clip::Args),
+    Pwd(commands::pwd::Args),
+    /// Alias to pwd
+    Clip(commands::pwd::Args),
     /// Copy totp
     Totp(commands::totp::Args),
     /// Display entry's info

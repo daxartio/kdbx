@@ -26,14 +26,16 @@ curl -fsSL https://raw.githubusercontent.com/daxartio/kdbx/master/install.sh | s
 Display selector and then print entry's info:
   $ kdbx show
 
-Copy password if only single entry found otherwise display selector:
-  $ kdbx clip /root/emails/gmail
+Copy password/totp if only single entry found otherwise display selector:
+  $ kdbx pwd /root/emails/gmail
+  $ kdbx totp /root/emails/gmail
 
-Print password to STDOUT:
-  $ kdbx clip github.com | cat
+Print password/totp to STDOUT:
+  $ kdbx pwd github.com | cat
+  $ kdbx totp github.com | cat
 
 Read password from STDIN:
-  $ cat /mnt/usb/key | kdbx clip
+  $ cat /mnt/usb/key | kdbx pwd
 ```
 
 <!-- CLI START -->
@@ -46,7 +48,8 @@ A secure hole for your passwords (Keepass CLI)
 Usage: kdbx <COMMAND>
 
 Commands:
-  clip  Copy password and clear clipboard after specified amount of time
+  pwd   Copy password and clear clipboard after specified amount of time
+  clip  Alias to pwd
   totp  Copy totp
   show  Display entry's info
   add   Add new entry
@@ -59,12 +62,12 @@ Options:
   -V, --version  Print version
 ```
 
-### clip
+### pwd
 
 ```
 Copy password and clear clipboard after specified amount of time
 
-Usage: kdbx clip [OPTIONS] --database <DATABASE> [ENTRY]
+Usage: kdbx pwd [OPTIONS] --database <DATABASE> [ENTRY]
 
 Arguments:
   [ENTRY]

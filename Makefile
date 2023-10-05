@@ -20,7 +20,7 @@ fmt:
 cli-md:
 	@rm -f cli.md
 	@echo "### commands\n\n\`\`\`" >> cli.md && cargo run -q -- -h >> cli.md && echo "\`\`\`\n" >> cli.md
-	@echo "### clip\n\n\`\`\`" >> cli.md && cargo run -q -- clip -h >> cli.md && echo "\`\`\`\n" >> cli.md
+	@echo "### pwd\n\n\`\`\`" >> cli.md && cargo run -q -- pwd -h >> cli.md && echo "\`\`\`\n" >> cli.md
 	@echo "### totp\n\n\`\`\`" >> cli.md && cargo run -q -- totp -h >> cli.md && echo "\`\`\`\n" >> cli.md
 	@echo "### show\n\n\`\`\`" >> cli.md && cargo run -q -- show -h >> cli.md && echo "\`\`\`\n" >> cli.md
 	@echo "### add\n\n\`\`\`" >> cli.md && cargo run -q -- add -h >> cli.md && echo "\`\`\`\n" >> cli.md
