@@ -7,7 +7,7 @@ repo="kdbx"
 exe_name="kdbx"
 githubUrl=""
 githubApiUrl=""
-version="0.5.0"
+version="0.5.1"
 
 get_arch() {
     a=$(uname -m)
