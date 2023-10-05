@@ -1,6 +1,8 @@
-use crate::{pwd::Pwd, Result, STDIN};
-use keepass::{db::Database, DatabaseKey};
 use std::{fs::File, io::Read, path::PathBuf};
+
+use keepass::{db::Database, DatabaseKey};
+
+use crate::{pwd::Pwd, Result, STDIN};
 
 #[derive(clap::Args)]
 pub struct Args {

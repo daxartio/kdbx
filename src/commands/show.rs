@@ -1,8 +1,8 @@
 use std::path::PathBuf;
 
 use crate::{
-    keepass::{find_entry, get_entries, open_database, show_entry},
-    utils::skim,
+    keepass::{find_entry, get_entries, show_entry},
+    utils::{open_database_interactively, skim},
     Result,
 };
 
@@ -43,7 +43,7 @@ pub(crate) fn run(args: Args) -> Result<()> {
     if !args.database.exists() {
         return Err("File does not exist".to_string().into());
     }
-    let (db, _) = open_database(
+    let (db, _) = open_database_interactively(
         &args.database,
         args.key_file.as_deref(),
         args.use_keyring,

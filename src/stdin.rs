@@ -1,11 +1,10 @@
-use crate::pwd::Pwd;
-
-use libc::{isatty, tcgetattr, tcsetattr, ECHO, ECHONL, STDIN_FILENO, TCSANOW};
-
-use log::*;
-
 use std::io::{self, Read};
 use std::mem::MaybeUninit;
+
+use libc::{isatty, tcgetattr, tcsetattr, ECHO, ECHONL, STDIN_FILENO, TCSANOW};
+use log::*;
+
+use crate::pwd::Pwd;
 
 pub struct Stdin(Option<libc::termios>);
 

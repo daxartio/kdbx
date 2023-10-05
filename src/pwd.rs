@@ -1,6 +1,6 @@
-use log::*;
-
 use std::{convert::AsRef, ops::Deref, ptr, sync::atomic};
+
+use log::*;
 
 #[derive(PartialEq, Clone)]
 pub struct Pwd(String);

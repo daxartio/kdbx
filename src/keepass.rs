@@ -1,16 +1,16 @@
+use std::{
+    fs::File,
+    io::{Cursor, Read},
+    path::Path,
+};
+
 use keepass::{
     db::{Entry, Group, Node},
     error::DatabaseOpenError,
     Database, DatabaseKey,
 };
-use log::*;
-use std::{
-    fs::File,
-    io::{self, Cursor, Read},
-    path::Path,
-};
 
-use crate::{keyring::Keyring, pwd::Pwd, utils::is_tty, STDIN};
+use crate::pwd::Pwd;
 
 pub fn save_database(db: Database, dbfile: &Path, keyfile: Option<&Path>, password: Pwd) {
     let password = if password.is_empty() {
@@ -30,67 +30,6 @@ pub fn save_database(db: Database, dbfile: &Path, keyfile: Option<&Path>, passwo
 }
 
 pub fn open_database(
-    dbfile: &Path,
-    keyfile: Option<&Path>,
-    use_keyring: bool,
-    remove_key: bool,
-) -> (Result<Database, DatabaseOpenError>, Pwd) {
-    if remove_key {
-        if let Some(keyring) = Keyring::from_db_path(dbfile) {
-            if let Err(msg) = keyring.delete_password() {
-                werr!("No key removed for `{}`. {}", dbfile.to_string_lossy(), msg);
-            }
-        }
-    }
-
-    let keyring = if use_keyring {
-        Keyring::from_db_path(dbfile).map(|k| {
-            debug!("keyring: {}", k);
-            k
-        })
-    } else {
-        None
-    };
-
-    if let Some(Ok(password)) = keyring.as_ref().map(|k| k.get_password()) {
-        if let Ok(db) = open_db(password.clone(), dbfile, keyfile) {
-            return (Ok(db), password);
-        }
-
-        warn!("removing wrong password in the keyring");
-        let _ = keyring.as_ref().map(|k| k.delete_password());
-    }
-
-    // Try read password from pipe
-    if !is_tty(io::stdin()) {
-        let password = STDIN.read_password();
-        return (open_db(password.clone(), dbfile, keyfile), password);
-    }
-
-    // Allow multiple attempts to enter the password from TTY
-    let mut att: u8 = 3;
-    loop {
-        put!("Password: ");
-
-        let password = STDIN.read_password();
-        let db = open_db(password.clone(), dbfile, keyfile);
-
-        // If opened successfully store the password
-        if db.is_ok() {
-            let _ = keyring.as_ref().map(|k| k.set_password(&password));
-        }
-
-        att -= 1;
-
-        if db.is_ok() || att == 0 {
-            break (db.map_err(From::from), password);
-        }
-
-        wout!("{} attempt(s) left.", att);
-    }
-}
-
-fn open_db(
     password: Pwd,
     dbfile: &Path,
     keyfile: Option<&Path>,

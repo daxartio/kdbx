@@ -1,9 +1,9 @@
+use log::*;
+
 use crate::Result;
 
 #[cfg(feature = "clipboard")]
 use arboard::Clipboard;
-
-use log::*;
 
 #[cfg(feature = "clipboard")]
 pub fn set_clipboard(val: Option<String>) -> Result<()> {

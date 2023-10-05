@@ -2,10 +2,7 @@ use std::path::PathBuf;
 
 use keepass::db::{Entry, Node, Value};
 
-use crate::{
-    keepass::{open_database, save_database},
-    Result, STDIN,
-};
+use crate::{keepass::save_database, utils::open_database_interactively, Result, STDIN};
 
 #[derive(clap::Args)]
 pub struct Args {
@@ -30,7 +27,7 @@ pub(crate) fn run(args: Args) -> Result<()> {
     if !args.database.exists() {
         return Err("File does not exist".to_string().into());
     }
-    let (db, password) = open_database(
+    let (db, password) = open_database_interactively(
         &args.database,
         args.key_file.as_deref(),
         args.use_keyring,

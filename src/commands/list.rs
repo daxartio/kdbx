@@ -1,7 +1,8 @@
-use crate::keepass::{get_entries, open_database};
-use crate::Result;
-
 use std::path::PathBuf;
+
+use crate::keepass::get_entries;
+use crate::utils::open_database_interactively;
+use crate::Result;
 
 #[derive(clap::Args)]
 pub struct Args {
@@ -30,7 +31,7 @@ pub(crate) fn run(args: Args) -> Result<()> {
     if !args.database.exists() {
         return Err("File does not exist".to_string().into());
     }
-    let (db, _) = open_database(
+    let (db, _) = open_database_interactively(
         &args.database,
         args.key_file.as_deref(),
         args.use_keyring,

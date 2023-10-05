@@ -7,12 +7,11 @@ mod keyring;
 mod pwd;
 mod stdin;
 
-use clap::{Parser, Subcommand};
-use once_cell::sync::Lazy;
-
-use log::*;
-
 use std::{env, error, process, result, sync::atomic, thread, time};
+
+use clap::{Parser, Subcommand};
+use log::*;
+use once_cell::sync::Lazy;
 
 const DEFAULT_TIMEOUT: u8 = 15;
 const CANCEL_RQ_FREQ: u64 = 10;

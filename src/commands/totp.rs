@@ -1,12 +1,12 @@
-use crate::clipboard::set_clipboard;
-use crate::keepass::{find_entry, get_entries, open_database};
-use crate::utils::{is_tty, skim};
-use crate::Result;
+use std::io;
+use std::path::PathBuf;
 
 use keepass::db::Entry;
 
-use std::io;
-use std::path::PathBuf;
+use crate::clipboard::set_clipboard;
+use crate::keepass::{find_entry, get_entries};
+use crate::utils::{is_tty, open_database_interactively, skim};
+use crate::Result;
 
 #[derive(clap::Args)]
 pub struct Args {
@@ -49,7 +49,7 @@ pub(crate) fn run(args: Args) -> Result<()> {
     if !args.database.exists() {
         return Err("File does not exist".to_string().into());
     }
-    let (db, _) = open_database(
+    let (db, _) = open_database_interactively(
         &args.database,
         args.key_file.as_deref(),
         args.use_keyring,

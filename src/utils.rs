@@ -1,9 +1,15 @@
-use keepass::db::Entry;
+use std::{borrow::Cow, io, path::Path};
+
+use keepass::{db::Entry, error::DatabaseOpenError, Database};
+use log::*;
 use skim::prelude::*;
 
-use std::borrow::Cow;
-
-use crate::keepass::{show_entry, WrappedEntry};
+use crate::{
+    keepass::{open_database, show_entry, WrappedEntry},
+    keyring::Keyring,
+    pwd::Pwd,
+    STDIN,
+};
 
 #[macro_export]
 macro_rules! put {
@@ -30,6 +36,67 @@ macro_rules! werr {
         let _ = writeln!(&mut ::std::io::stderr(), $($arg)*);
         let _ = ::std::io::stderr().flush();
     });
+}
+
+pub fn open_database_interactively(
+    dbfile: &Path,
+    keyfile: Option<&Path>,
+    use_keyring: bool,
+    remove_key: bool,
+) -> (Result<Database, DatabaseOpenError>, Pwd) {
+    if remove_key {
+        if let Some(keyring) = Keyring::from_db_path(dbfile) {
+            if let Err(msg) = keyring.delete_password() {
+                werr!("No key removed for `{}`. {}", dbfile.to_string_lossy(), msg);
+            }
+        }
+    }
+
+    let keyring = if use_keyring {
+        Keyring::from_db_path(dbfile).map(|k| {
+            debug!("keyring: {}", k);
+            k
+        })
+    } else {
+        None
+    };
+
+    if let Some(Ok(password)) = keyring.as_ref().map(|k| k.get_password()) {
+        if let Ok(db) = open_database(password.clone(), dbfile, keyfile) {
+            return (Ok(db), password);
+        }
+
+        warn!("removing wrong password in the keyring");
+        let _ = keyring.as_ref().map(|k| k.delete_password());
+    }
+
+    // Try read password from pipe
+    if !is_tty(io::stdin()) {
+        let password = STDIN.read_password();
+        return (open_database(password.clone(), dbfile, keyfile), password);
+    }
+
+    // Allow multiple attempts to enter the password from TTY
+    let mut att: u8 = 3;
+    loop {
+        put!("Password: ");
+
+        let password = STDIN.read_password();
+        let db = open_database(password.clone(), dbfile, keyfile);
+
+        // If opened successfully store the password
+        if db.is_ok() {
+            let _ = keyring.as_ref().map(|k| k.set_password(&password));
+        }
+
+        att -= 1;
+
+        if db.is_ok() || att == 0 {
+            break (db.map_err(From::from), password);
+        }
+
+        wout!("{} attempt(s) left.", att);
+    }
 }
 
 pub fn skim<'a>(
