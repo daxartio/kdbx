@@ -1,6 +1,6 @@
 use crate::clipboard::set_clipboard;
-use crate::keepass::open_database;
-use crate::utils::{find_entry, get_entries, is_tty, skim};
+use crate::keepass::{find_entry, get_entries, open_database};
+use crate::utils::{is_tty, skim};
 use crate::{Result, CANCEL, CANCEL_RQ_FREQ};
 
 use keepass::db::Entry;

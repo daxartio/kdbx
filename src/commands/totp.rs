@@ -1,6 +1,6 @@
 use crate::clipboard::set_clipboard;
-use crate::keepass::open_database;
-use crate::utils::{find_entry, get_entries, is_tty, skim};
+use crate::keepass::{find_entry, get_entries, open_database};
+use crate::utils::{is_tty, skim};
 use crate::Result;
 
 use keepass::db::Entry;
@@ -61,7 +61,7 @@ pub(crate) fn run(args: Args) -> Result<()> {
 
     if let Some(query) = query {
         if let Some(entry) = find_entry(query, &db.root) {
-            // Print password to stdout when pipe used
+            // Print totp to stdout when pipe used
             // e.g. `kdbx totp example.com | cat`
             if !is_tty(io::stdout()) {
                 put!("{}", get_totp(entry, args.raw));

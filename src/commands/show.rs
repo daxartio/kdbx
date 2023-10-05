@@ -1,8 +1,8 @@
 use std::path::PathBuf;
 
 use crate::{
-    keepass::open_database,
-    utils::{find_entry, get_entries, show_entry, skim},
+    keepass::{find_entry, get_entries, open_database, show_entry},
+    utils::skim,
     Result,
 };
 

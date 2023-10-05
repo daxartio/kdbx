@@ -1,5 +1,4 @@
-use crate::keepass::open_database;
-use crate::utils::get_entries;
+use crate::keepass::{get_entries, open_database};
 use crate::Result;
 
 use std::path::PathBuf;
