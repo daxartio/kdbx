@@ -46,7 +46,6 @@ fn main() {
 
 #[derive(Parser)]
 #[command(version, about = "A secure hole for your passwords (Keepass CLI)")]
-#[command(propagate_version = true)]
 struct Cli {
     #[command(subcommand)]
     command: Commands,
