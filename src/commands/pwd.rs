@@ -64,7 +64,7 @@ pub(crate) fn run(args: Args) -> Result<()> {
     if let Some(query) = query {
         if let Some(entry) = find_entry(query, &db.root) {
             // Print password to stdout when pipe used
-            // e.g. `kdbx clip example.com | cat`
+            // e.g. `kdbx pwd example.com | cat`
             if !is_tty(io::stdout()) {
                 put!("{}", entry.get_password().unwrap_or_default());
                 return Ok(());
@@ -98,7 +98,7 @@ fn clip(entry: &Entry, timeout: u8) -> Result<()> {
 
     if set_clipboard(Some(pwd.to_string())).is_err() {
         return Err(format!(
-            "Clipboard unavailable. Try use STDOUT, i.e. `kdbx clip '{}' | cat`.",
+            "Clipboard unavailable. Try use STDOUT, i.e. `kdbx pwd '{}' | cat`.",
             entry.get_title().unwrap_or_default()
         )
         .into());

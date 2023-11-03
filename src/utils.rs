@@ -99,6 +99,12 @@ pub fn open_database_interactively(
     }
 }
 
+struct EntryItem {
+    idx: usize,
+    title: String,
+    props: Option<String>,
+}
+
 pub fn skim<'a>(
     entries: &[WrappedEntry<'a>],
     query: Option<&str>,
@@ -175,12 +181,6 @@ pub fn skim<'a>(
             }
         })
         .unwrap()
-}
-
-struct EntryItem {
-    idx: usize,
-    title: String,
-    props: Option<String>,
 }
 
 impl SkimItem for EntryItem {

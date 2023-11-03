@@ -95,7 +95,7 @@ pub(crate) fn run(args: Args) -> Result<()> {
 fn clip(entry: &Entry, raw: bool) -> Result<()> {
     if set_clipboard(Some(get_totp(entry, raw))).is_err() {
         return Err(format!(
-            "Clipboard unavailable. Try use STDOUT, i.e. `kdbx clip '{}' | cat`.",
+            "Clipboard unavailable. Try use STDOUT, i.e. `kdbx totp '{}' | cat`.",
             entry.get_title().unwrap_or_default()
         )
         .into());

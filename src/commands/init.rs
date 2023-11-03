@@ -1,8 +1,8 @@
-use std::{fs::File, io::Read, path::PathBuf};
+use std::{fs::File, path::PathBuf};
 
-use keepass::{db::Database, DatabaseKey};
+use keepass::db::Database;
 
-use crate::{pwd::Pwd, Result, STDIN};
+use crate::{keepass::new_database_key, pwd::Pwd, Result, STDIN};
 
 #[derive(clap::Args)]
 pub struct Args {
@@ -24,11 +24,6 @@ pub(crate) fn run(args: Args) -> Result<()> {
     if password != confirm {
         return Err("Passwords do not match".into());
     }
-    let password = if password.is_empty() {
-        None
-    } else {
-        Some(&password[..])
-    };
 
     let database_name = read_db_name();
 
@@ -36,9 +31,7 @@ pub(crate) fn run(args: Args) -> Result<()> {
 
     db.meta.database_name = Some(database_name);
 
-    let mut keyfile = args.key_file.and_then(|f| File::open(f).ok());
-    let keyfile = keyfile.as_mut().map(|kf| kf as &mut dyn Read);
-    let key = DatabaseKey { password, keyfile };
+    let key = new_database_key(args.key_file.as_deref(), password);
 
     db.save(&mut File::create(args.database)?, key)?;
 

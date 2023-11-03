@@ -12,21 +12,29 @@ use keepass::{
 
 use crate::pwd::Pwd;
 
-pub fn save_database(db: Database, dbfile: &Path, keyfile: Option<&Path>, password: Pwd) {
+pub fn new_database_key(keyfile: Option<&Path>, password: Pwd) -> DatabaseKey {
     let password = if password.is_empty() {
         None
     } else {
         Some(&password[..])
     };
-    let mut keyfile = read_file(keyfile);
-    db.save(
-        &mut File::create(dbfile).unwrap(),
-        DatabaseKey {
-            password,
-            keyfile: keyfile.as_mut().map(|f| f as &mut dyn Read),
-        },
-    )
-    .unwrap();
+    let keyfile = read_file(keyfile);
+
+    let key = DatabaseKey::new();
+
+    let key = match password {
+        Some(password) => key.with_password(password),
+        None => key,
+    };
+    match keyfile {
+        Some(mut keyfile) => key.with_keyfile(&mut keyfile).unwrap(),
+        None => key,
+    }
+}
+
+pub fn save_database(db: Database, dbfile: &Path, keyfile: Option<&Path>, password: Pwd) {
+    let key = new_database_key(keyfile, password);
+    db.save(&mut File::create(dbfile).unwrap(), key).unwrap();
 }
 
 pub fn open_database(
@@ -34,22 +42,9 @@ pub fn open_database(
     dbfile: &Path,
     keyfile: Option<&Path>,
 ) -> Result<Database, DatabaseOpenError> {
-    let password = if password.is_empty() {
-        None
-    } else {
-        Some(&password[..])
-    };
-
     let mut dbfile = read_file(Some(dbfile));
-    let mut keyfile = read_file(keyfile);
-
-    Database::open(
-        dbfile.as_mut().map(|f| f as &mut dyn Read).unwrap(),
-        DatabaseKey {
-            password,
-            keyfile: keyfile.as_mut().map(|f| f as &mut dyn Read),
-        },
-    )
+    let key = new_database_key(keyfile, password);
+    Database::open(dbfile.as_mut().map(|f| f as &mut dyn Read).unwrap(), key)
 }
 
 pub fn show_entry(entry: &Entry) -> String {
