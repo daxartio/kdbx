@@ -22,20 +22,30 @@ curl -fsSL https://raw.githubusercontent.com/daxartio/kdbx/master/install.sh | s
 
 ### Examples
 
-```
 Display selector and then print entry's info:
-  $ kdbx show
+
+```
+kdbx show
+```
 
 Copy password/totp if only single entry found otherwise display selector:
-  $ kdbx pwd /root/emails/gmail
-  $ kdbx totp /root/emails/gmail
+
+```
+kdbx pwd /root/emails/gmail
+kdbx totp /root/emails/gmail
+```
 
 Print password/totp to STDOUT:
-  $ kdbx pwd github.com | cat
-  $ kdbx totp github.com | cat
+
+```
+kdbx pwd github.com | cat
+kdbx totp github.com | cat
+```
 
 Read password from STDIN:
-  $ cat /mnt/usb/key | kdbx pwd
+
+```
+cat /mnt/usb/key | kdbx pwd
 ```
 
 <!-- CLI START -->
@@ -82,7 +92,6 @@ Options:
   -d, --database <DATABASE>  KDBX file path [env: KDBX_DATABASE=]
   -k, --key-file <KEY_FILE>  Path to the key file unlocking the database [env: KDBX_KEY_FILE=]
   -h, --help                 Print help
-  -V, --version              Print version
 ```
 
 ### totp
@@ -105,7 +114,6 @@ Options:
   -d, --database <DATABASE>  KDBX file path [env: KDBX_DATABASE=]
   -k, --key-file <KEY_FILE>  Path to the key file unlocking the database [env: KDBX_KEY_FILE=]
   -h, --help                 Print help
-  -V, --version              Print version
 ```
 
 ### show
@@ -127,7 +135,6 @@ Options:
   -d, --database <DATABASE>  KDBX file path [env: KDBX_DATABASE=]
   -k, --key-file <KEY_FILE>  Path to the key file unlocking the database [env: KDBX_KEY_FILE=]
   -h, --help                 Print help
-  -V, --version              Print version
 ```
 
 ### add
@@ -143,7 +150,6 @@ Options:
   -d, --database <DATABASE>  KDBX file path [env: KDBX_DATABASE=]
   -k, --key-file <KEY_FILE>  Path to the key file unlocking the database [env: KDBX_KEY_FILE=]
   -h, --help                 Print help
-  -V, --version              Print version
 ```
 
 ### init
@@ -157,7 +163,6 @@ Options:
   -d, --database <DATABASE>  KDBX file path [env: KDBX_DATABASE=]
   -k, --key-file <KEY_FILE>  Path to the key file unlocking the database [env: KDBX_KEY_FILE=]
   -h, --help                 Print help
-  -V, --version              Print version
 ```
 
 ### list
@@ -174,7 +179,6 @@ Options:
   -d, --database <DATABASE>  KDBX file path [env: KDBX_DATABASE=]
   -k, --key-file <KEY_FILE>  Path to the key file unlocking the database [env: KDBX_KEY_FILE=]
   -h, --help                 Print help
-  -V, --version              Print version
 ```
 
 <!-- CLI END -->
