@@ -1009,7 +1009,7 @@ dependencies = [
 
 [[package]]
 name = "kdbx"
-version = "0.5.2"
+version = "0.5.3"
 dependencies = [
  "arboard",
  "assert_cmd",
@@ -1029,9 +1029,9 @@ dependencies = [
 
 [[package]]
 name = "keepass"
-version = "0.6.4"
+version = "0.6.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "02167d3b2f044a89bb836ec7ebd1e88c7a8e0c44ac51f7a7f09acc60cf408aaa"
+checksum = "a69be91e6aeada33fca98962d6e801504dd013231721a29926677da2823e961b"
 dependencies = [
  "aes",
  "base32",
