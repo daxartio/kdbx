@@ -4,6 +4,12 @@
 
 A secure hole for your passwords (Keepass CLI)
 
+## Features
+
+- MacOS, Linux
+- kdbx removes a password from memory
+- master password is stored in OS's keyring
+
 ## Install
 
 [Download](https://github.com/daxartio/kdbx/releases)
