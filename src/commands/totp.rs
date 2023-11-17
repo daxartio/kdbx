@@ -5,6 +5,7 @@ use keepass::db::Entry;
 use crate::{
     clipboard::set_clipboard,
     keepass::{find_entry, get_entries},
+    pwd::Pwd,
     utils::{is_tty, open_database_interactively, skim},
     Result,
 };
@@ -65,7 +66,7 @@ pub(crate) fn run(args: Args) -> Result<()> {
             // Print totp to stdout when pipe used
             // e.g. `kdbx totp example.com | cat`
             if !is_tty(io::stdout()) {
-                put!("{}", get_totp(entry, args.raw));
+                put!("{}", get_totp(entry, args.raw).to_string());
                 return Ok(());
             }
             return clip(entry, args.raw);
@@ -104,12 +105,17 @@ fn clip(entry: &Entry, raw: bool) -> Result<()> {
     Ok(())
 }
 
-fn get_totp(entry: &Entry, raw: bool) -> String {
+fn get_totp(entry: &Entry, raw: bool) -> Pwd {
     if raw {
-        return entry.get_raw_otp_value().unwrap_or_default().to_string();
+        return entry
+            .get_raw_otp_value()
+            .unwrap_or_default()
+            .to_string()
+            .into();
     }
     entry
         .get_otp()
         .map(|v| v.value_now().map(|otpcode| otpcode.code).unwrap())
         .unwrap_or_default()
+        .into()
 }

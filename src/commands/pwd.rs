@@ -6,6 +6,7 @@ use log::*;
 use crate::{
     clipboard::set_clipboard,
     keepass::{find_entry, get_entries},
+    pwd::Pwd,
     utils::{is_tty, open_database_interactively, skim},
     Result, CANCEL, CANCEL_RQ_FREQ,
 };
@@ -94,9 +95,9 @@ pub(crate) fn run(args: Args) -> Result<()> {
 }
 
 fn clip(entry: &Entry, timeout: u8) -> Result<()> {
-    let pwd = entry.get_password().unwrap();
+    let pwd: Pwd = entry.get_password().unwrap().to_string().into();
 
-    if set_clipboard(Some(pwd.to_string())).is_err() {
+    if set_clipboard(Some(pwd)).is_err() {
         return Err(format!(
             "Clipboard unavailable. Try use STDOUT, i.e. `kdbx pwd '{}' | cat`.",
             entry.get_title().unwrap_or_default()
