@@ -64,7 +64,6 @@ Usage: kdbx <COMMAND>
 
 Commands:
   pwd   Copy password and clear clipboard after specified amount of time
-  clip  Alias to pwd
   totp  Copy totp
   show  Display entry's info
   add   Add new entry
