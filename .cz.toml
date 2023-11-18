@@ -3,6 +3,7 @@ name = "cz_conventional_commits"
 version = "0.5.3"
 tag_format = "$version"
 version_files = [
+    "Cargo.lock:version",
     "Cargo.toml:version",
     "install.sh"
 ]
