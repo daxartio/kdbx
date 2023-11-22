@@ -1,6 +1,10 @@
 use std::path::PathBuf;
 
-use crate::{keepass::get_entries, utils::open_database_interactively, Result};
+use crate::{
+    keepass::{get_entries, EntryPath},
+    utils::open_database_interactively,
+    Result,
+};
 
 #[derive(clap::Args)]
 pub struct Args {
@@ -40,7 +44,7 @@ pub(crate) fn run(args: Args) -> Result<()> {
     let entries = &get_entries(&db.root, "".to_string());
     for e in entries.iter() {
         if args.no_group {
-            wout!("{}", e.entry.get_title().unwrap_or_default());
+            wout!("{}", e.get_title());
         } else {
             wout!("{}", e.entry_path());
         }

@@ -59,7 +59,7 @@ pub(crate) fn run(args: Args) -> Result<()> {
         }
     }
 
-    if let Some(entry) = skim(
+    if let Some(wrapped_entry) = skim(
         &get_entries(&db.root, "".to_string()),
         query,
         args.no_group,
@@ -67,7 +67,7 @@ pub(crate) fn run(args: Args) -> Result<()> {
         args.full_screen,
         false,
     ) {
-        put!("{}", show_entry(entry));
+        put!("{}", show_entry(wrapped_entry.entry));
         return Ok(());
     }
 

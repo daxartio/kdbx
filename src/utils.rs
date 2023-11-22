@@ -1,11 +1,11 @@
 use std::{borrow::Cow, io, path::Path};
 
-use keepass::{db::Entry, error::DatabaseOpenError, Database};
+use keepass::{error::DatabaseOpenError, Database};
 use log::*;
 use skim::prelude::*;
 
 use crate::{
-    keepass::{open_database, show_entry, WrappedEntry},
+    keepass::{open_database, show_entry, EntryPath},
     keyring::Keyring,
     pwd::Pwd,
     STDIN,
@@ -105,14 +105,14 @@ struct EntryItem {
     props: Option<String>,
 }
 
-pub fn skim<'a>(
-    entries: &[WrappedEntry<'a>],
+pub fn skim<'a, T: EntryPath>(
+    entries: &'a [T],
     query: Option<&str>,
     hide_groups: bool,
     show_preview: bool,
     full_screen: bool,
     with_totp: bool,
-) -> Option<&'a Entry> {
+) -> Option<&'a T> {
     let opts = SkimOptionsBuilder::default()
         .multi(false)
         .reverse(true)
@@ -136,13 +136,7 @@ pub fn skim<'a>(
 
     let entries = entries
         .iter()
-        .filter(|e| {
-            if with_totp {
-                e.entry.get_raw_otp_value().is_some()
-            } else {
-                true
-            }
-        })
+        .filter(|e| if with_totp { e.has_totp() } else { true })
         .collect::<Vec<_>>();
 
     entries
@@ -150,13 +144,13 @@ pub fn skim<'a>(
         .enumerate()
         .map(|(idx, e)| {
             let title = if hide_groups {
-                e.entry.get_title().unwrap_or_default().to_owned()
+                e.get_title()
             } else {
                 e.entry_path()
             };
 
             let props = if show_preview {
-                Some(show_entry(e.entry))
+                Some(show_entry(e.get_entry()))
             } else {
                 None
             };
@@ -177,7 +171,7 @@ pub fn skim<'a>(
                     .as_ref()
                     .as_any()
                     .downcast_ref::<EntryItem>()
-                    .map(|ei: &EntryItem| entries[ei.idx].entry)
+                    .map(|ei: &EntryItem| entries[ei.idx])
             }
         })
         .unwrap()

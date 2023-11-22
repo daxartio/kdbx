@@ -80,7 +80,7 @@ pub(crate) fn run(args: Args) -> Result<()> {
         return Err(format!("No single match for {}.", query.unwrap_or("[empty]")).into());
     }
 
-    if let Some(entry) = skim(
+    if let Some(wrapped_entry) = skim(
         &get_entries(&db.root, "".to_string()),
         query,
         args.no_group,
@@ -88,7 +88,7 @@ pub(crate) fn run(args: Args) -> Result<()> {
         args.full_screen,
         false,
     ) {
-        clip(entry, args.timeout)?
+        clip(wrapped_entry.entry, args.timeout)?
     }
 
     Ok(())

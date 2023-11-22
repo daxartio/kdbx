@@ -68,16 +68,28 @@ fn read_file(file: Option<&Path>) -> Option<Cursor<Vec<u8>>> {
     }
 }
 
-pub fn get_entries(group: &Group, path: String) -> Vec<WrappedEntry<'_>> {
-    let mut entries = vec![];
+pub fn get_entries(group: &Group, path: impl ToString) -> Vec<WrappedEntry<'_>> {
+    let mut entries = Vec::with_capacity(
+        group
+            .children
+            .iter()
+            .filter(|v| match v {
+                Node::Entry(_) => true,
+                Node::Group(_) => false,
+            })
+            .count(),
+    );
     group.children.iter().for_each(|v| match v {
         Node::Entry(entry) => entries.push(WrappedEntry {
-            path: format!("{}/{}", path, group.name),
+            path: format!("{}/{}", path.to_string(), group.name),
             entry,
         }),
         Node::Group(child) => {
             if !child.children.is_empty() {
-                entries.extend(get_entries(child, format!("{}/{}", path, group.name)))
+                entries.extend(get_entries(
+                    child,
+                    format!("{}/{}", path.to_string(), group.name),
+                ))
             }
         }
     });
@@ -89,18 +101,30 @@ pub struct WrappedEntry<'a> {
     pub entry: &'a Entry,
 }
 
-impl WrappedEntry<'_> {
-    pub fn entry_path(&self) -> String {
+impl EntryPath for WrappedEntry<'_> {
+    fn entry_path(&self) -> String {
         format!(
             "{}/{}",
             self.path,
             self.entry.get_title().unwrap_or_default().to_owned(),
         )
     }
+
+    fn get_entry(&self) -> &Entry {
+        self.entry
+    }
+
+    fn get_title(&self) -> String {
+        self.entry.get_title().unwrap_or_default().to_owned()
+    }
+
+    fn has_totp(&self) -> bool {
+        self.entry.get_raw_otp_value().is_some()
+    }
 }
 
 pub fn find_entry<'a>(query: &str, group: &'a Group) -> Option<&'a Entry> {
-    get_entries(group, "".to_string()).iter().find_map(|e| {
+    get_entries(group, "").iter().find_map(|e| {
         let entry_path = e.entry_path();
         if entry_path.ends_with(query) {
             Some(e.entry)
@@ -108,6 +132,13 @@ pub fn find_entry<'a>(query: &str, group: &'a Group) -> Option<&'a Entry> {
             None
         }
     })
+}
+
+pub trait EntryPath {
+    fn entry_path(&self) -> String;
+    fn get_entry(&self) -> &Entry;
+    fn get_title(&self) -> String;
+    fn has_totp(&self) -> bool;
 }
 
 #[cfg(test)]
