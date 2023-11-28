@@ -17,7 +17,7 @@ default = ["clipboard"]
 clipboard = ["dep:arboard"]
 
 [dependencies]
-arboard = { version = "3.2.1", default-features = false, optional = true }
+arboard = { version = "3.3.0", default-features = false, optional = true }
 atty = "0.2"
 clap = { version = "4.4.9", features = ["derive", "env"] }
 ctrlc = { version = "3.4", features = ["termination"] }
