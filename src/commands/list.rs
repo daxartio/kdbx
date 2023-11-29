@@ -41,7 +41,7 @@ pub(crate) fn run(args: Args) -> Result<()> {
     );
     let db = db?;
 
-    let entries = &get_entries(&db.root, "".to_string());
+    let entries = &get_entries(&db.root, "");
     for e in entries.iter() {
         if args.no_group {
             wout!("{}", e.get_title());

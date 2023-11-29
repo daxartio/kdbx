@@ -5,8 +5,8 @@ all: fmt check test
 
 .PHONY: check
 check:
-	cargo fmt --all -- --check
-	cargo clippy -- -D warnings
+	cargo +nightly fmt --all -- --check
+	cargo clippy --all-features --all-targets -- -D warnings
 
 .PHONY: test
 test:

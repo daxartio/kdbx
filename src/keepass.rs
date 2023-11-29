@@ -164,6 +164,6 @@ mod tests {
         assert_eq!(find_entry("child/My Title", &group), Some(&entry));
         assert_eq!(find_entry("My Title", &group), Some(&entry));
         assert_eq!(find_entry("Title", &group), Some(&entry));
-        assert!(find_entry("My Other Title", &group).is_none());
+        assert_eq!(find_entry("My Other Title", &group), None);
     }
 }
