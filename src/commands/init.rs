@@ -1,5 +1,6 @@
 use std::{fs::File, path::PathBuf};
 
+use clap::ValueHint;
 use keepass::db::Database;
 
 use crate::{keepass::new_database_key, pwd::Pwd, Result, STDIN};
@@ -7,11 +8,11 @@ use crate::{keepass::new_database_key, pwd::Pwd, Result, STDIN};
 #[derive(clap::Args)]
 pub struct Args {
     /// KDBX file path
-    #[arg(short, long, env = "KDBX_DATABASE")]
+    #[arg(short, long, env = "KDBX_DATABASE", value_hint = ValueHint::FilePath)]
     database: PathBuf,
 
     /// Path to the key file unlocking the database
-    #[arg(short, long, env = "KDBX_KEY_FILE")]
+    #[arg(short, long, env = "KDBX_KEY_FILE", value_hint = ValueHint::FilePath)]
     key_file: Option<PathBuf>,
 }
 

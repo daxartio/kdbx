@@ -37,6 +37,7 @@ fn main() {
         Commands::Init(args) => commands::init::run(args),
         Commands::Add(args) => commands::add::run(args),
         Commands::List(args) => commands::list::run(args),
+        Commands::Completion(args) => commands::completion::run(args),
     } {
         werr!("{}", err);
         process::exit(1);
@@ -64,6 +65,8 @@ enum Commands {
     Init(commands::init::Args),
     /// List all entries
     List(commands::list::Args),
+    /// Outputs the completion file for given shell
+    Completion(commands::completion::Args),
 }
 
 fn set_ctrlc_handler() {

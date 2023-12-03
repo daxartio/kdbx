@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 
+use clap::ValueHint;
 use keepass::db::{Entry, Node, Value};
 
 use crate::{keepass::save_database, utils::open_database_interactively, Result, STDIN};
@@ -15,11 +16,11 @@ pub struct Args {
     remove_key: bool,
 
     /// KDBX file path
-    #[arg(short, long, env = "KDBX_DATABASE")]
+    #[arg(short, long, env = "KDBX_DATABASE", value_hint = ValueHint::FilePath)]
     database: PathBuf,
 
     /// Path to the key file unlocking the database
-    #[arg(short, long, env = "KDBX_KEY_FILE")]
+    #[arg(short, long, env = "KDBX_KEY_FILE", value_hint = ValueHint::FilePath)]
     key_file: Option<PathBuf>,
 }
 

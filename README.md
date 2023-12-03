@@ -53,6 +53,12 @@ Read password from STDIN:
 cat /mnt/usb/key | kdbx pwd
 ```
 
+Generate shell completions:
+
+```
+kdbx completion --shell=zsh > /usr/local/share/zsh/site-functions/_kdbx
+```
+
 <!-- CLI START -->
 
 ### commands
@@ -63,13 +69,14 @@ A secure hole for your passwords (Keepass CLI)
 Usage: kdbx <COMMAND>
 
 Commands:
-  pwd   Copy password and clear clipboard after specified amount of time
-  totp  Copy totp
-  show  Display entry's info
-  add   Add new entry
-  init  Init new database
-  list  List all entries
-  help  Print this message or the help of the given subcommand(s)
+  pwd         Copy password and clear clipboard after specified amount of time
+  totp        Copy totp
+  show        Display entry's info
+  add         Add new entry
+  init        Init new database
+  list        List all entries
+  completion  Outputs the completion file for given shell
+  help        Print this message or the help of the given subcommand(s)
 
 Options:
   -h, --help     Print help
@@ -183,6 +190,18 @@ Options:
   -d, --database <DATABASE>  KDBX file path [env: KDBX_DATABASE=]
   -k, --key-file <KEY_FILE>  Path to the key file unlocking the database [env: KDBX_KEY_FILE=]
   -h, --help                 Print help
+```
+
+### completion
+
+```
+Outputs the completion file for given shell
+
+Usage: kdbx completion --shell <SHELL>
+
+Options:
+  -s, --shell <SHELL>  [possible values: bash, elvish, fish, powershell, zsh]
+  -h, --help           Print help
 ```
 
 <!-- CLI END -->

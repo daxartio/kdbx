@@ -26,5 +26,6 @@ cli-md:
 	@echo "### add\n\n\`\`\`" >> cli.md && cargo run -q -- add -h >> cli.md && echo "\`\`\`\n" >> cli.md
 	@echo "### init\n\n\`\`\`" >> cli.md && cargo run -q -- init -h >> cli.md && echo "\`\`\`\n" >> cli.md
 	@echo "### list\n\n\`\`\`" >> cli.md && cargo run -q -- list -h >> cli.md && echo "\`\`\`\n" >> cli.md
+	@echo "### completion\n\n\`\`\`" >> cli.md && cargo run -q -- completion -h >> cli.md && echo "\`\`\`\n" >> cli.md
 	@cat cli.md
 	@rm cli.md
