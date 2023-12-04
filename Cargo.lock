@@ -376,7 +376,7 @@ dependencies = [
 
 [[package]]
 name = "clap_lex"
-version = "0.7.0"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "702fc72eb24e5a1e48ce58027a675bc24edd52096d5397d4aea7c6dd9eca0bd1"
 
@@ -1039,9 +1039,9 @@ dependencies = [
 
 [[package]]
 name = "keepass"
-version = "0.6.8"
+version = "0.6.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8a6df0c3b53406095e6b36d23efb89640c66ddc6dffdce2160e0023713764260"
+checksum = "d27fb3fc1247177494b8fed3c729adbc0d1e5cfafe9eb48f365f3d0f57a47801"
 dependencies = [
  "aes",
  "base32",
