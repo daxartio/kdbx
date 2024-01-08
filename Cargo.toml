@@ -20,7 +20,7 @@ clipboard = ["dep:arboard"]
 arboard = { version = "3.3.0", default-features = false, optional = true }
 atty = "0.2"
 clap = { version = "4.4.11", features = ["derive", "env"] }
-clap_complete = "4.4.4"
+clap_complete = "4.4.6"
 ctrlc = { version = "3.4", features = ["termination"] }
 env_logger = "0.10"
 keepass = { version = "0.6.14", features = ["save_kdbx4", "totp"]}
