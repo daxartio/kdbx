@@ -20,7 +20,7 @@ clipboard = ["dep:arboard"]
 arboard = { version = "3.3.0", default-features = false, optional = true }
 atty = "0.2"
 clap = { version = "4.4.17", features = ["derive", "env"] }
-clap_complete = "4.4.4"
+clap_complete = "4.4.7"
 ctrlc = { version = "3.4", features = ["termination"] }
 env_logger = "0.10"
 keepass = { version = "0.6.17", features = ["save_kdbx4", "totp"]}
@@ -32,8 +32,8 @@ once_cell = "1.19"
 skim = "0.10"
 
 [dev-dependencies]
-assert_cmd = "2.0.12"
-predicates = "3.0.4"
+assert_cmd = "2.0.13"
+predicates = "3.1.0"
 rstest = "0.18.2"
 
 [target.'cfg(target_os = "macos")'.dependencies]
