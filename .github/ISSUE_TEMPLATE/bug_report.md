@@ -1,26 +1,27 @@
----
+______________________________________________________________________
+
 name: Bug report
 about: Create a report to help us improve
 title: ''
 labels: bug
 assignees: ''
 
----
+______________________________________________________________________
 
 ## Bug description
 
 <!-- A clear and concise description of what the bug is. -->
 
-- Would you like to work on a fix? [y/n]
+- Would you like to work on a fix? \[y/n\]
 
 ## To Reproduce
 
 Steps to reproduce the behavior:
 
 1. ...
-2. ...
-3. ...
-4. ...
+1. ...
+1. ...
+1. ...
 
 <!-- Make sure you are able to reproduce the bug in the main branch, too. -->
 
@@ -36,8 +37,8 @@ Steps to reproduce the behavior:
 
 <!-- Please fill the following information. -->
 
-- OS: [e.g. Ubuntu 20.04]
-- kdbx version: [e.g. 0.1.0]
+- OS: \[e.g. Ubuntu 20.04\]
+- kdbx version: \[e.g. 0.1.0\]
 
 ## Additional context
 
