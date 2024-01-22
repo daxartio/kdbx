@@ -1,6 +1,6 @@
-use std::{borrow::Cow, io, path::Path};
+use std::{borrow::Cow, error, fmt, io, path::Path};
 
-use keepass::{error::DatabaseOpenError, Database};
+use keepass::{error::DatabaseOpenError as KeepassOpenError, Database};
 use log::*;
 use skim::prelude::*;
 
@@ -38,12 +38,43 @@ macro_rules! werr {
     });
 }
 
+#[derive(Debug)]
+pub enum DatabaseOpenError {
+    NoInteraction,
+    KeepassOpenError(KeepassOpenError),
+}
+
+impl fmt::Display for DatabaseOpenError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            DatabaseOpenError::NoInteraction => write!(f, "No interaction"),
+            DatabaseOpenError::KeepassOpenError(..) => write!(f, "Invalid password or key"),
+        }
+    }
+}
+
+impl error::Error for DatabaseOpenError {
+    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
+        match *self {
+            DatabaseOpenError::NoInteraction => None,
+            DatabaseOpenError::KeepassOpenError(ref e) => Some(e),
+        }
+    }
+}
+
+impl From<KeepassOpenError> for DatabaseOpenError {
+    fn from(value: KeepassOpenError) -> Self {
+        DatabaseOpenError::KeepassOpenError(value)
+    }
+}
+
 pub fn open_database_interactively(
     dbfile: &Path,
     keyfile: Option<&Path>,
     use_keyring: bool,
     remove_key: bool,
-) -> (Result<Database, DatabaseOpenError>, Pwd) {
+    no_interaction: bool,
+) -> Result<(Database, Pwd), DatabaseOpenError> {
     if remove_key {
         if let Some(keyring) = Keyring::from_db_path(dbfile) {
             if let Err(msg) = keyring.delete_password() {
@@ -63,7 +94,7 @@ pub fn open_database_interactively(
 
     if let Some(Ok(password)) = keyring.as_ref().map(|k| k.get_password()) {
         if let Ok(db) = open_database(password.clone(), dbfile, keyfile) {
-            return (Ok(db), password);
+            return Ok((db, password));
         }
 
         warn!("removing wrong password in the keyring");
@@ -73,7 +104,11 @@ pub fn open_database_interactively(
     // Try read password from pipe
     if !is_tty(io::stdin()) {
         let password = STDIN.read_password();
-        return (open_database(password.clone(), dbfile, keyfile), password);
+        return Ok((open_database(password.clone(), dbfile, keyfile)?, password));
+    }
+
+    if no_interaction {
+        return Err(DatabaseOpenError::NoInteraction);
     }
 
     // Allow multiple attempts to enter the password from TTY
@@ -92,7 +127,7 @@ pub fn open_database_interactively(
         att -= 1;
 
         if db.is_ok() || att == 0 {
-            break (db.map_err(From::from), password);
+            break Ok((db?, password));
         }
 
         wout!("{} attempt(s) left.", att);

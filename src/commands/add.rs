@@ -33,7 +33,8 @@ pub(crate) fn run(args: Args) -> Result<()> {
         args.key_file.as_deref(),
         args.use_keyring,
         args.remove_key,
-    );
+        false,
+    )?;
     let entry_title = {
         put!("Title: ");
         STDIN.read_text()
@@ -80,7 +81,7 @@ pub(crate) fn run(args: Args) -> Result<()> {
         "otp".to_string(),
         Value::Protected(totp_raw.as_bytes().into()),
     );
-    let mut db = db?;
+    let mut db = db;
     db.root.children.push(Node::Entry(entry));
 
     save_database(db, &args.database, args.key_file.as_deref(), password);

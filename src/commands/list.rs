@@ -40,8 +40,8 @@ pub(crate) fn run(args: Args) -> Result<()> {
         args.key_file.as_deref(),
         args.use_keyring,
         args.remove_key,
-    );
-    let db = db?;
+        false,
+    )?;
 
     let entries = &get_entries(&db.root, "");
     for e in entries.iter() {

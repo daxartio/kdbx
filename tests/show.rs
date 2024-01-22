@@ -20,3 +20,20 @@ fn test_show() {
         .success()
         .stdout("Title: test-pwd\nUsername: test\nUrl: \nNote: ");
 }
+
+#[test]
+fn test_show_no_interaction_not_found() {
+    let mut cmd = Command::cargo_bin(BIN_NAME).unwrap();
+    cmd.args([
+        "show",
+        "-d",
+        "tests/files/test.kdbx",
+        "-k",
+        "tests/files/secret",
+        "unknown-pwd",
+        "-n",
+    ])
+    .write_stdin("test123")
+    .assert()
+    .stderr("Not found\n");
+}

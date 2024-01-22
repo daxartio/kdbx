@@ -43,3 +43,20 @@ fn test_totp_raw() {
         "otpauth://totp/test-totp:test?secret=JBSWY3DPEHPK3PXP&period=30&digits=6&issuer=test-totp",
     );
 }
+
+#[test]
+fn test_totp_no_interaction_not_found() {
+    let mut cmd = Command::cargo_bin(BIN_NAME).unwrap();
+    cmd.args([
+        "totp",
+        "-d",
+        "tests/files/test.kdbx",
+        "-k",
+        "tests/files/secret",
+        "unknown-pwd",
+        "-n",
+    ])
+    .write_stdin("test123")
+    .assert()
+    .stderr("Not found\n");
+}

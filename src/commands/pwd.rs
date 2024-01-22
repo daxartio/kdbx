@@ -24,6 +24,10 @@ pub struct Args {
     #[arg(short = 'G', long)]
     no_group: bool,
 
+    /// Do not ask any interactive question
+    #[arg(short = 'n', long)]
+    no_interaction: bool,
+
     /// Preview entry during picking
     #[arg(short = 'v', long)]
     preview: bool,
@@ -58,8 +62,8 @@ pub(crate) fn run(args: Args) -> Result<()> {
         args.key_file.as_deref(),
         args.use_keyring,
         args.remove_key,
-    );
-    let db = db?;
+        args.no_interaction,
+    )?;
 
     let query = args.entry.as_ref().map(String::as_ref);
 
@@ -73,6 +77,10 @@ pub(crate) fn run(args: Args) -> Result<()> {
             }
             return clip(entry, args.timeout);
         }
+    }
+
+    if args.no_interaction {
+        return Err("Not found".to_string().into());
     }
 
     // If more than a single match has been found and stdout is not a TTY
