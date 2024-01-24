@@ -59,6 +59,10 @@ Generate shell completions:
 kdbx completion --shell=zsh > /usr/local/share/zsh/site-functions/_kdbx
 ```
 
+```
+kdbx completion --shell=fish > ~/.config/fish/completions/kdbx.fish
+```
+
 <!-- CLI START -->
 
 ### commands
@@ -96,6 +100,7 @@ Arguments:
 Options:
   -t, --timeout <TIMEOUT>    Timeout in seconds before clearing the clipboard. 0 means no clean-up [default: 15]
   -G, --no-group             Show entries without group(s)
+  -n, --no-interaction       Do not ask any interactive question
   -v, --preview              Preview entry during picking
   -f, --full-screen          Use all available screen for picker
   -p, --use-keyring          Store password for the database in the OS's keyring
@@ -117,6 +122,7 @@ Arguments:
 
 Options:
   -G, --no-group             Show entries without group(s)
+  -n, --no-interaction       Do not ask any interactive question
   -v, --preview              Preview entry during picking
       --raw                  Show the secret instead of code
   -f, --full-screen          Use all available screen for picker
@@ -139,6 +145,7 @@ Arguments:
 
 Options:
   -G, --no-group             Show entries without group(s)
+  -n, --no-interaction       Do not ask any interactive question
   -v, --preview              Preview entry during picking
   -f, --full-screen          Use all available screen for picker
   -p, --use-keyring          Store password for the database in the OS's keyring
