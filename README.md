@@ -11,14 +11,26 @@ A secure hole for your passwords (Keepass CLI)
 
 ## Install
 
+### Manual
+
 [Download](https://github.com/daxartio/kdbx/releases)
+
+### Cargo
 
 ```
 cargo install kdbx
 ```
 
+### Script
+
 ```
 curl -fsSL https://raw.githubusercontent.com/daxartio/kdbx/master/install.sh | sh -s
+```
+
+### Homebrew
+
+```
+brew install daxartio/tap/kdbx
 ```
 
 **Please take a backup of your database before updating the application.**
