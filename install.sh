@@ -5,9 +5,10 @@ set -e
 owner="daxartio"
 repo="kdbx"
 exe_name="kdbx"
-githubUrl=""
-githubApiUrl=""
+github_url=""
+github_api_url=""
 version="0.8.0"
+sha256_suffix=".sha256"
 
 get_arch() {
     a=$(uname -m)
@@ -53,11 +54,11 @@ for i in "$@"; do
     esac
 done
 
-if [ -z "$githubUrl" ]; then
-    githubUrl="https://github.com"
+if [ -z "$github_url" ]; then
+    github_url="https://github.com"
 fi
-if [ -z "$githubApiUrl" ]; then
-    githubApiUrl="https://api.github.com"
+if [ -z "$github_api_url" ]; then
+    github_api_url="https://api.github.com"
 fi
 
 download_folder="${HOME}/Downloads"
@@ -76,7 +77,7 @@ if [ -z "$version" ]; then
         command curl -L \
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
-            ${githubApiUrl}/repos/${owner}/${repo}/releases |
+            ${github_api_url}/repos/${owner}/${repo}/releases |
         command grep -o "/${owner}/${repo}/releases/download/.*/${file_name_gz}" |
         command head -n 1
     )
@@ -84,9 +85,9 @@ if [ -z "$version" ]; then
         echo "ERROR: unable to find a release asset called ${file_name_gz}"
         exit 1
     fi
-    asset_uri="${githubUrl}${asset_path}"
+    asset_uri="${github_url}${asset_path}"
 else
-    asset_uri="${githubUrl}/${owner}/${repo}/releases/download/${version}/${file_name_gz}"
+    asset_uri="${github_url}/${owner}/${repo}/releases/download/${version}/${file_name_gz}"
 fi
 
 echo "[1/3] Download ${asset_uri} to ${download_folder}"
