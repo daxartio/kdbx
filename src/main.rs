@@ -4,6 +4,7 @@ mod clipboard;
 mod commands;
 mod keepass;
 mod keyring;
+mod logger;
 mod pwd;
 mod stdin;
 
@@ -17,6 +18,7 @@ const DEFAULT_TIMEOUT: u8 = 15;
 const CANCEL_RQ_FREQ: u64 = 10;
 
 static BIN_NAME: &str = env!("CARGO_PKG_NAME");
+static BIN_DESCRIPTION: &str = env!("CARGO_PKG_DESCRIPTION");
 
 static CANCEL: atomic::AtomicBool = atomic::AtomicBool::new(false);
 static STDIN: Lazy<stdin::Stdin> = Lazy::new(stdin::Stdin::new);
@@ -24,8 +26,7 @@ static STDIN: Lazy<stdin::Stdin> = Lazy::new(stdin::Stdin::new);
 type Result<T> = result::Result<T, Box<dyn error::Error>>;
 
 fn main() {
-    human_panic::setup_panic!();
-    env_logger::init();
+    logger::init(BIN_NAME);
 
     set_ctrlc_handler();
 
@@ -46,7 +47,7 @@ fn main() {
 }
 
 #[derive(Parser)]
-#[command(version, about = "A secure hole for your passwords (Keepass CLI)")]
+#[command(version, about = BIN_DESCRIPTION)]
 struct Cli {
     #[command(subcommand)]
     command: Commands,
