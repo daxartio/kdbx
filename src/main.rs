@@ -24,6 +24,7 @@ static STDIN: Lazy<stdin::Stdin> = Lazy::new(stdin::Stdin::new);
 type Result<T> = result::Result<T, Box<dyn error::Error>>;
 
 fn main() {
+    human_panic::setup_panic!();
     env_logger::init();
 
     set_ctrlc_handler();
