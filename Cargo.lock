@@ -188,6 +188,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "35636a1494ede3b646cc98f74f8e62c773a38a659ebc777a2cf26b9b74171df9"
 
 [[package]]
+name = "base64"
+version = "0.22.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9475866fec1451be56a3c2400fd081ff546538961565ccb5b7142cbd22bc7a51"
+
+[[package]]
 name = "beef"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1085,13 +1091,13 @@ dependencies = [
 
 [[package]]
 name = "keepass"
-version = "0.7.6"
+version = "0.7.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0cb15dc2b351ff7b36beddb44cbe8a12e1efebdc42d4de7ec67e6da9f60acf3b"
+checksum = "f29f465c4ec41bdf2fc762630bf4c762544ba13812d0b690151c84a39e05130b"
 dependencies = [
  "aes",
  "base32",
- "base64",
+ "base64 0.22.0",
  "block-modes",
  "byteorder",
  "cbc",
@@ -1517,7 +1523,7 @@ version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1e71971821b3ae0e769e4a4328dbcb517607b434db7697e9aba17203ec14e46a"
 dependencies = [
- "base64",
+ "base64 0.21.5",
  "blake2b_simd",
  "constant_time_eq",
 ]
