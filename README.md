@@ -225,6 +225,16 @@ Options:
 
 <!-- CLI END -->
 
+## Configuration
+
+kdbx can be configured using environment variables.
+
+| name           | type   | default | options             |
+|----------------|--------|---------|---------------------|
+| KDBX_LOG       | string | 'error' | ...                 |
+| KDBX_LOG_STYLE | string | 'auto'  | auto, always, never |
+
+
 ## License
 
 MIT
