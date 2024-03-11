@@ -48,7 +48,7 @@ jobs:
           TARGET: ${{ matrix.target }}
         run: .github/scripts/package.sh
       - name: Publish
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: "kdbx*"
           body_path: ./release.md
