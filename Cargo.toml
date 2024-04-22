@@ -23,7 +23,7 @@ clap = { version = "4.5.4", features = ["derive", "env"] }
 clap_complete = "4.5.1"
 ctrlc = { version = "3.4", features = ["termination"] }
 env_logger = "0.11"
-human-panic = "1.2.3"
+human-panic = "2.0.0"
 keepass = { version = "0.7.7", features = ["save_kdbx4", "totp"]}
 libc = "0.2"
 log = { version = "0.4", features = ["max_level_trace", "release_max_level_warn"] }
