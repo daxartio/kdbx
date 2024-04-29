@@ -959,6 +959,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "hex"
+version = "0.4.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
+
+[[package]]
 name = "hex-literal"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1097,9 +1103,9 @@ dependencies = [
 
 [[package]]
 name = "keepass"
-version = "0.7.7"
+version = "0.7.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f29f465c4ec41bdf2fc762630bf4c762544ba13812d0b690151c84a39e05130b"
+checksum = "0459ea4c807c41eefc3f933a0b5cfe1e7cfdcfdeb6bc0725fbe1a945874608f3"
 dependencies = [
  "aes",
  "base32",
@@ -1112,6 +1118,7 @@ dependencies = [
  "cipher",
  "flate2",
  "getrandom",
+ "hex",
  "hex-literal",
  "hmac",
  "rust-argon2",
