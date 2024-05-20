@@ -176,9 +176,9 @@ dependencies = [
 
 [[package]]
 name = "base32"
-version = "0.4.0"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "23ce669cd6c8588f79e15cf450314f9638f967fc5770ff1c7c1deb0925ea7cfa"
+checksum = "d1ce0365f4d5fb6646220bb52fe547afd51796d90f914d4063cb0b032ebee088"
 
 [[package]]
 name = "base64"
@@ -1105,9 +1105,9 @@ dependencies = [
 
 [[package]]
 name = "keepass"
-version = "0.7.10"
+version = "0.7.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4818f032057289905905316e536dd8094078949e70a4ad72248807bf2d554636"
+checksum = "dac00622d13dbc62afa5ea82a97e88aa8032c76a714ba8bd5a40e0c714c6ec6a"
 dependencies = [
  "aes",
  "base32",
