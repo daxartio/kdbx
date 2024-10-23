@@ -104,7 +104,7 @@ pub(crate) fn run(args: Args) -> Result<()> {
 }
 
 fn clip(entry: &Entry, timeout: u8) -> Result<()> {
-    let pwd: Pwd = entry.get_password().unwrap().to_string().into();
+    let pwd: Pwd = entry.get_password().unwrap_or_default().to_string().into();
 
     if set_clipboard(Some(pwd)).is_err() {
         return Err(format!(
