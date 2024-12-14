@@ -21,6 +21,12 @@ A secure hole for your passwords (Keepass CLI)
 cargo install kdbx
 ```
 
+[cargo-binstall](https://github.com/cargo-bins/cargo-binstall)
+
+```
+cargo binstall kdbx
+```
+
 ### Script
 
 ```
@@ -233,7 +239,6 @@ kdbx can be configured using environment variables.
 |----------------|--------|---------|---------------------|
 | KDBX_LOG       | string | 'error' | ...                 |
 | KDBX_LOG_STYLE | string | 'auto'  | auto, always, never |
-
 
 ## License
 
