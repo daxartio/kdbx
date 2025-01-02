@@ -140,30 +140,42 @@ struct EntryItem {
     props: Option<String>,
 }
 
-pub fn skim<'a, T: EntryPath>(
-    entries: &'a [T],
-    query: Option<&str>,
+pub fn skim<T: EntryPath>(
+    entries: &[T],
+    query: Option<String>,
     hide_groups: bool,
     show_preview: bool,
     full_screen: bool,
     with_totp: bool,
-) -> Option<&'a T> {
+) -> Option<&T> {
     let opts = SkimOptionsBuilder::default()
         .multi(false)
         .reverse(true)
         .query(query)
-        .header(if full_screen { Some(" ") } else { None }) // separate counters and entries with a line
-        .color(Some("16")) // 16 colors scheme
-        .height(Some("7"))
+        .header(if full_screen {
+            Some(" ".to_string())
+        } else {
+            None
+        }) // separate counters and entries with a line
+        .color(Some("16".to_string())) // 16 colors scheme
+        .height("7".to_string())
         .no_height(full_screen)
         .bind(vec![
-            "ctrl-q:ignore", // toggle interactive
-            "ctrl-l:ignore", // clear screen
-            "ctrl-r:ignore", // rotate mode
+            "ctrl-q:ignore".to_string(), // toggle interactive
+            "ctrl-l:ignore".to_string(), // clear screen
+            "ctrl-r:ignore".to_string(), // rotate mode
         ])
-        .delimiter(if hide_groups { None } else { Some("/") })
-        .preview(if show_preview { Some("") } else { None })
-        .preview_window(Some("right:65%"))
+        .delimiter(if hide_groups {
+            "".to_string()
+        } else {
+            "/".to_string()
+        })
+        .preview(if show_preview {
+            Some("".to_string())
+        } else {
+            None
+        })
+        .preview_window("right:65%".to_string())
         .build()
         .expect("well formed SkimOptions");
 

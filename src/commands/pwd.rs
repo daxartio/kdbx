@@ -91,7 +91,7 @@ pub(crate) fn run(args: Args) -> Result<()> {
 
     if let Some(wrapped_entry) = skim(
         &get_entries(&db.root, ""),
-        query,
+        query.map(String::from),
         args.no_group,
         args.preview,
         args.full_screen,
