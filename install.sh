@@ -7,7 +7,7 @@ repo="kdbx"
 exe_name="kdbx"
 github_url=""
 github_api_url=""
-version="0.9.2"
+version="0.9.3"
 sha256_suffix=".sha256"
 
 get_arch() {
