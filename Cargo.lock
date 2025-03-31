@@ -336,9 +336,9 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "4.5.32"
+version = "4.5.34"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6088f3ae8c3608d19260cd7445411865a485688711b78b5be70d78cd96136f83"
+checksum = "e958897981290da2a852763fe9cdb89cd36977a5d729023127095fa94d95e2ff"
 dependencies = [
  "clap_builder",
  "clap_derive",
@@ -346,9 +346,9 @@ dependencies = [
 
 [[package]]
 name = "clap_builder"
-version = "4.5.32"
+version = "4.5.34"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "22a7ef7f676155edfb82daa97f99441f3ebf4a58d5e32f295a56259f1b6facc8"
+checksum = "83b0f35019843db2160b5bb19ae09b4e6411ac33fc6a712003c33e03090e2489"
 dependencies = [
  "anstream",
  "anstyle",
@@ -1507,9 +1507,9 @@ dependencies = [
 
 [[package]]
 name = "pulldown-cmark"
-version = "0.12.2"
+version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f86ba2052aebccc42cbbb3ed234b8b13ce76f75c3551a303cb2bcffcff12bb14"
+checksum = "1e8bbe1a966bd2f362681a44f6edce3c2310ac21e4d5067a6e7ec396297a6ea0"
 dependencies = [
  "bitflags 2.6.0",
  "memchr",
