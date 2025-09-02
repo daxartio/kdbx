@@ -225,7 +225,7 @@ pub fn skim<T: EntryPath>(
 }
 
 impl SkimItem for EntryItem {
-    fn text(&self) -> Cow<str> {
+    fn text(&self) -> Cow<'_, str> {
         Cow::Borrowed(&self.title)
     }
 

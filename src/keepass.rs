@@ -5,7 +5,7 @@ use std::{
 };
 
 use keepass::{
-    db::{Entry, Group, Node},
+    db::{Entry, Group, Node, Value},
     error::DatabaseOpenError,
     Database, DatabaseKey,
 };
@@ -48,13 +48,41 @@ pub fn open_database(
 }
 
 pub fn show_entry(entry: &Entry) -> String {
-    format!(
-        "Title: {}\nUsername: {}\nUrl: {}\nNote: {}",
-        entry.get_title().unwrap_or_default(),
-        entry.get_username().unwrap_or_default(),
-        entry.get_url().unwrap_or_default(),
-        entry.get("Notes").unwrap_or_default(),
-    )
+    let mut fields: Vec<String> = Vec::new();
+
+    let mut add_field_if_not_empty = |key: &str, value: Option<&str>| {
+        if let Some(val) = value {
+            let trimmed_val = val.trim();
+            if !trimmed_val.is_empty() {
+                fields.push(format!("{}: {}", key, trimmed_val));
+            }
+        }
+    };
+
+    add_field_if_not_empty("Title", entry.get_title());
+    add_field_if_not_empty("Username", entry.get_username());
+    add_field_if_not_empty("Url", entry.get_url());
+    add_field_if_not_empty("Note", entry.get("Notes"));
+
+    for (key, value) in entry.fields.iter() {
+        if ["Title", "UserName", "URL", "Password", "Notes"].contains(&key.as_str()) {
+            continue;
+        }
+
+        let value_str = match value {
+            Value::Unprotected(s) => s.to_string(),
+            Value::Protected(p) => String::from_utf8(p.unsecure().to_vec()).unwrap_or_default(),
+            Value::Bytes(b) => String::from_utf8(b.clone())
+                .unwrap_or_else(|_| format!("<bytes: {}>", hex::encode(b))),
+        };
+
+        let trimmed_value = value_str.trim();
+        if !trimmed_value.is_empty() {
+            fields.push(format!("{key}: {trimmed_value}"));
+        }
+    }
+
+    fields.join("\n")
 }
 
 fn read_file(file: Option<&Path>) -> Option<Cursor<Vec<u8>>> {
