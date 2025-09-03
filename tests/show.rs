@@ -18,7 +18,7 @@ fn test_show() {
         .assert();
     assert_cmd
         .success()
-        .stdout("Title: test-pwd\nUsername: test\nUrl: \nNote: ");
+        .stdout("Title: test-pwd\nUsername: test");
 }
 
 #[test]
