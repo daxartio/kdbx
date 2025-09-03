@@ -4,11 +4,11 @@ use clap::ValueHint;
 use keepass::db::Entry;
 
 use crate::{
+    Result,
     clipboard::set_clipboard,
     keepass::{find_entry, get_entries},
     pwd::Pwd,
     utils::{is_tty, open_database_interactively, skim},
-    Result,
 };
 
 #[derive(clap::Args)]
@@ -66,16 +66,16 @@ pub(crate) fn run(args: Args) -> Result<()> {
 
     let query = args.entry.as_ref().map(String::as_ref);
 
-    if let Some(query) = query {
-        if let Some(entry) = find_entry(query, &db.root) {
-            // Print totp to stdout when pipe used
-            // e.g. `kdbx totp example.com | cat`
-            if !is_tty(io::stdout()) {
-                put!("{}", get_totp(entry, args.raw).to_string());
-                return Ok(());
-            }
-            return clip(entry, args.raw);
+    if let Some(query) = query
+        && let Some(entry) = find_entry(query, &db.root)
+    {
+        // Print totp to stdout when pipe used
+        // e.g. `kdbx totp example.com | cat`
+        if !is_tty(io::stdout()) {
+            put!("{}", get_totp(entry, args.raw).to_string());
+            return Ok(());
         }
+        return clip(entry, args.raw);
     }
 
     if args.no_interaction {

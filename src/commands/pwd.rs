@@ -5,11 +5,11 @@ use keepass::db::Entry;
 use log::*;
 
 use crate::{
+    CANCEL, CANCEL_RQ_FREQ, Result,
     clipboard::set_clipboard,
     keepass::{find_entry, get_entries},
     pwd::Pwd,
     utils::{is_tty, open_database_interactively, skim},
-    Result, CANCEL, CANCEL_RQ_FREQ,
 };
 
 #[derive(clap::Args)]
@@ -67,16 +67,16 @@ pub(crate) fn run(args: Args) -> Result<()> {
 
     let query = args.entry.as_ref().map(String::as_ref);
 
-    if let Some(query) = query {
-        if let Some(entry) = find_entry(query, &db.root) {
-            // Print password to stdout when pipe used
-            // e.g. `kdbx pwd example.com | cat`
-            if !is_tty(io::stdout()) {
-                put!("{}", entry.get_password().unwrap_or_default());
-                return Ok(());
-            }
-            return clip(entry, args.timeout);
+    if let Some(query) = query
+        && let Some(entry) = find_entry(query, &db.root)
+    {
+        // Print password to stdout when pipe used
+        // e.g. `kdbx pwd example.com | cat`
+        if !is_tty(io::stdout()) {
+            put!("{}", entry.get_password().unwrap_or_default());
+            return Ok(());
         }
+        return clip(entry, args.timeout);
     }
 
     if args.no_interaction {

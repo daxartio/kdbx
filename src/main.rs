@@ -82,6 +82,6 @@ fn set_ctrlc_handler() {
         let _ = clipboard::set_clipboard(None);
         process::exit(1);
     }) {
-        warn!("unable to setup Ctrl+C handler: {}", e);
+        warn!("unable to setup Ctrl+C handler: {e}");
     }
 }

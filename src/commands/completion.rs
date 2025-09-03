@@ -1,7 +1,7 @@
 use std::io;
 
 use clap::{Command, CommandFactory};
-use clap_complete::{generate, Generator, Shell};
+use clap_complete::{Generator, Shell, generate};
 
 use crate::{Cli, Result};
 
@@ -21,6 +21,6 @@ pub(crate) fn run(args: Args) -> Result<()> {
     Ok(())
 }
 
-fn print_completions<G: Generator>(gen: G, cmd: &mut Command) {
-    generate(gen, cmd, cmd.get_name().to_string(), &mut io::stdout());
+fn print_completions<G: Generator>(shell: G, cmd: &mut Command) {
+    generate(shell, cmd, cmd.get_name().to_string(), &mut io::stdout());
 }

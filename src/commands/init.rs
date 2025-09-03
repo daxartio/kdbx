@@ -3,7 +3,7 @@ use std::{fs::File, path::PathBuf};
 use clap::ValueHint;
 use keepass::db::Database;
 
-use crate::{keepass::new_database_key, pwd::Pwd, Result, STDIN};
+use crate::{Result, STDIN, keepass::new_database_key, pwd::Pwd};
 
 #[derive(clap::Args)]
 pub struct Args {

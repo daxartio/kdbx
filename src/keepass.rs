@@ -5,9 +5,9 @@ use std::{
 };
 
 use keepass::{
+    Database, DatabaseKey,
     db::{Entry, Group, Node, Value},
     error::DatabaseOpenError,
-    Database, DatabaseKey,
 };
 
 use crate::pwd::Pwd;
@@ -54,7 +54,7 @@ pub fn show_entry(entry: &Entry) -> String {
         if let Some(val) = value {
             let trimmed_val = val.trim();
             if !trimmed_val.is_empty() {
-                fields.push(format!("{}: {}", key, trimmed_val));
+                fields.push(format!("{key}: {trimmed_val}"));
             }
         }
     };

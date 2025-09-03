@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use clap::ValueHint;
 use keepass::db::{Entry, Node, Value};
 
-use crate::{keepass::save_database, utils::open_database_interactively, Result, STDIN};
+use crate::{Result, STDIN, keepass::save_database, utils::open_database_interactively};
 
 #[derive(clap::Args)]
 pub struct Args {

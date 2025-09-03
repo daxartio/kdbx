@@ -1,5 +1,6 @@
-use env_logger::{Builder, Env};
 use std::env;
+
+use env_logger::{Builder, Env};
 
 pub fn init(prefix: &str) {
     let prefix = prefix.to_uppercase();
@@ -7,8 +8,8 @@ pub fn init(prefix: &str) {
 }
 
 fn new_env(prefix: &str) -> Env<'static> {
-    let filter_env = format!("{}_LOG", prefix);
-    let style_env = format!("{}_LOG_STYLE", prefix);
+    let filter_env = format!("{prefix}_LOG");
+    let style_env = format!("{prefix}_LOG_STYLE");
     Env::new().filter(filter_env).write_style(style_env)
 }
 

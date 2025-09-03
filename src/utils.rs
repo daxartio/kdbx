@@ -1,14 +1,14 @@
 use std::{borrow::Cow, error, fmt, io, path::Path};
 
-use keepass::{error::DatabaseOpenError as KeepassOpenError, Database};
+use keepass::{Database, error::DatabaseOpenError as KeepassOpenError};
 use log::*;
 use skim::prelude::*;
 
 use crate::{
-    keepass::{open_database, show_entry, EntryPath},
+    STDIN,
+    keepass::{EntryPath, open_database, show_entry},
     keyring::Keyring,
     pwd::Pwd,
-    STDIN,
 };
 
 #[macro_export]
@@ -75,17 +75,16 @@ pub fn open_database_interactively(
     remove_key: bool,
     no_interaction: bool,
 ) -> Result<(Database, Pwd), DatabaseOpenError> {
-    if remove_key {
-        if let Some(keyring) = Keyring::from_db_path(dbfile) {
-            if let Err(msg) = keyring.delete_password() {
-                werr!("No key removed for `{}`. {}", dbfile.to_string_lossy(), msg);
-            }
-        }
+    if remove_key
+        && let Some(keyring) = Keyring::from_db_path(dbfile)
+        && let Err(msg) = keyring.delete_password()
+    {
+        werr!("No key removed for `{}`. {}", dbfile.to_string_lossy(), msg);
     }
 
     let keyring = if use_keyring {
         Keyring::from_db_path(dbfile).map(|k| {
-            debug!("keyring: {}", k);
+            debug!("keyring: {k}");
             k
         })
     } else {

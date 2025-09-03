@@ -3,7 +3,7 @@ use std::{
     mem::MaybeUninit,
 };
 
-use libc::{isatty, tcgetattr, tcsetattr, ECHO, ECHONL, STDIN_FILENO, TCSANOW};
+use libc::{ECHO, ECHONL, STDIN_FILENO, TCSANOW, isatty, tcgetattr, tcsetattr};
 use log::*;
 
 use crate::pwd::Pwd;
@@ -19,7 +19,7 @@ impl Drop for Stdin {
 impl Stdin {
     pub fn new() -> Self {
         new_impl().unwrap_or_else(|e| {
-            warn!("platform API call error: {}", e);
+            warn!("platform API call error: {e}");
             Stdin(None)
         })
     }
@@ -47,7 +47,7 @@ fn new_impl() -> ::std::io::Result<Stdin> {
         let mut termios = MaybeUninit::uninit();
 
         if isatty(STDIN_FILENO) != 1 {
-            return Err(io::Error::new(io::ErrorKind::Other, "stdin is not a tty"));
+            return Err(io::Error::other("stdin is not a tty"));
         }
 
         if tcgetattr(STDIN_FILENO, termios.as_mut_ptr()) == 0 {

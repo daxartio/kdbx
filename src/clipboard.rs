@@ -1,16 +1,15 @@
-use log::*;
-
-use crate::{pwd::Pwd, Result};
-
 #[cfg(feature = "clipboard")]
 use arboard::Clipboard;
+use log::*;
+
+use crate::{Result, pwd::Pwd};
 
 #[cfg(feature = "clipboard")]
 pub fn set_clipboard(val: Option<Pwd>) -> Result<()> {
     Clipboard::new()
         .and_then(|mut clipboard| clipboard.set_text(val.as_deref().unwrap_or_default()))
         .map_err(|e| {
-            warn!("could not set the clipboard: {}", e);
+            warn!("could not set the clipboard: {e}");
             e.into()
         })
 }

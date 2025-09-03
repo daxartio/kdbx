@@ -3,9 +3,9 @@ use std::path::PathBuf;
 use clap::ValueHint;
 
 use crate::{
-    keepass::{get_entries, EntryPath},
-    utils::open_database_interactively,
     Result,
+    keepass::{EntryPath, get_entries},
+    utils::open_database_interactively,
 };
 
 #[derive(clap::Args)]

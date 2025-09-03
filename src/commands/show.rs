@@ -3,9 +3,9 @@ use std::path::PathBuf;
 use clap::ValueHint;
 
 use crate::{
+    Result,
     keepass::{find_entry, get_entries, show_entry},
     utils::{open_database_interactively, skim},
-    Result,
 };
 
 #[derive(clap::Args)]
@@ -58,11 +58,11 @@ pub(crate) fn run(args: Args) -> Result<()> {
     )?;
     let query = args.entry.as_ref().map(String::as_ref);
 
-    if let Some(query) = query {
-        if let Some(entry) = find_entry(query, &db.root) {
-            put!("{}", show_entry(entry));
-            return Ok(());
-        }
+    if let Some(query) = query
+        && let Some(entry) = find_entry(query, &db.root)
+    {
+        put!("{}", show_entry(entry));
+        return Ok(());
     }
 
     if args.no_interaction {

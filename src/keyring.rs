@@ -1,8 +1,8 @@
-use crate::pwd::Pwd;
+use std::{fmt, path::Path};
 
 use log::*;
 
-use std::{fmt, path::Path};
+use crate::pwd::Pwd;
 
 impl Keyring {
     pub fn from_db_path(file: impl AsRef<Path>) -> Option<Self> {
@@ -11,7 +11,7 @@ impl Keyring {
         Keyring::new(service, username)
             .map(Some)
             .unwrap_or_else(|e| {
-                warn!("can't init keyring ({})", e);
+                warn!("can't init keyring ({e})");
                 None
             })
     }
@@ -59,7 +59,7 @@ impl Keyring {
                 account,
                 keychain,
             })
-            .map_err(|e| format!("{}", e))
+            .map_err(|e| format!("{e}"))
     }
 
     pub fn get_password(&self) -> Result<Pwd, String> {
@@ -67,28 +67,28 @@ impl Keyring {
             .find_generic_password(&self.keyname, &self.account)
             .map(|(pwd, _)| unsafe { String::from_utf8_unchecked(pwd.to_owned()) })
             .map(Pwd::from)
-            .map_err(|e| format!("{}", e))
+            .map_err(|e| format!("{e}"))
     }
 
     pub fn set_password(&self, password: &str) -> Result<(), String> {
         self.keychain
             .set_generic_password(&self.keyname, &self.account, password.as_bytes())
-            .map_err(|e| format!("{}", e))
+            .map_err(|e| format!("{e}"))
     }
 
     pub fn delete_password(&self) -> Result<(), String> {
         self.keychain
             .find_generic_password(&self.keyname, &self.account)
             .map(|(_, key)| key.delete())
-            .map_err(|e| format!("{}", e))
+            .map_err(|e| format!("{e}"))
     }
 }
 
 #[cfg(target_os = "linux")]
-use libc::{c_char, c_int, syscall, SYS_add_key, SYS_keyctl, SYS_request_key};
+use std::{ffi::CString, io, ptr};
 
 #[cfg(target_os = "linux")]
-use std::{ffi::CString, io, ptr};
+use libc::{SYS_add_key, SYS_keyctl, SYS_request_key, c_char, c_int, syscall};
 
 #[cfg(target_os = "linux")]
 pub struct Keyring {
@@ -107,7 +107,7 @@ impl Keyring {
     pub fn get_password(&self) -> Result<Pwd, String> {
         const KEYCTL_READ: c_int = 11;
 
-        info!("keyctl key decription: {:?}", self.desc);
+        info!("keyctl key decryption: {:?}", self.desc);
 
         let pwd = unsafe {
             let key_id = match syscall(
@@ -142,7 +142,7 @@ impl Keyring {
     pub fn set_password(&self, password: &str) -> Result<(), String> {
         const KEY_SPEC_SESSION_KEYRING: c_int = -3;
 
-        info!("keyctl key decription: {:?}", self.desc);
+        info!("keyctl key decryption: {:?}", self.desc);
 
         unsafe {
             if -1
@@ -165,7 +165,7 @@ impl Keyring {
     pub fn delete_password(&self) -> Result<(), String> {
         const KEYCTL_INVALIDATE: c_int = 21;
 
-        info!("keyctl key decription: {:?}", self.desc);
+        info!("keyctl key decryption: {:?}", self.desc);
 
         unsafe {
             let key_id = match syscall(
