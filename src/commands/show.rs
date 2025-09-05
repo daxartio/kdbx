@@ -36,6 +36,10 @@ pub struct Args {
     #[arg(short = 'P', long)]
     remove_key: bool,
 
+    /// Show sensitive fields
+    #[arg(long)]
+    show_sensitive: bool,
+
     /// KDBX file path
     #[arg(short, long, env = "KDBX_DATABASE", value_hint = ValueHint::FilePath)]
     database: PathBuf,
@@ -61,7 +65,7 @@ pub(crate) fn run(args: Args) -> Result<()> {
     if let Some(query) = query
         && let Some(entry) = find_entry(query, &db.root)
     {
-        put!("{}", show_entry(entry));
+        put!("{}", show_entry(entry, args.show_sensitive));
         return Ok(());
     }
 
@@ -77,7 +81,7 @@ pub(crate) fn run(args: Args) -> Result<()> {
         args.full_screen,
         false,
     ) {
-        put!("{}", show_entry(wrapped_entry.entry));
+        put!("{}", show_entry(wrapped_entry.entry, args.show_sensitive));
         return Ok(());
     }
 

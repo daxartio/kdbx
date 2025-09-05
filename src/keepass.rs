@@ -12,6 +12,8 @@ use keepass::{
 
 use crate::pwd::Pwd;
 
+const MASKED_VALUE: &str = "******";
+
 pub fn new_database_key(keyfile: Option<&Path>, password: Pwd) -> DatabaseKey {
     let password = if password.is_empty() {
         None
@@ -47,22 +49,36 @@ pub fn open_database(
     Database::open(dbfile.as_mut().map(|f| f as &mut dyn Read).unwrap(), key)
 }
 
-pub fn show_entry(entry: &Entry) -> String {
+pub fn show_entry(entry: &Entry, show_sensitive: bool) -> String {
     let mut fields: Vec<String> = Vec::new();
 
-    let mut add_field_if_not_empty = |key: &str, value: Option<&str>| {
-        if let Some(val) = value {
+    let standard_fields = [
+        ("Title", entry.get_title()),
+        ("Username", entry.get_username()),
+        ("Password", entry.get_password()),
+        ("URL", entry.get_url()),
+        ("Notes", entry.get("Notes")),
+    ];
+
+    for (key, value) in standard_fields {
+        if key == "Password" {
+            if let Some(password) = value {
+                if show_sensitive {
+                    let trimmed_val = password.trim();
+                    if !trimmed_val.is_empty() {
+                        fields.push(format!("Password: {trimmed_val}"));
+                    }
+                } else {
+                    fields.push(format!("Password: {MASKED_VALUE}"));
+                }
+            }
+        } else if let Some(val) = value {
             let trimmed_val = val.trim();
             if !trimmed_val.is_empty() {
                 fields.push(format!("{key}: {trimmed_val}"));
             }
         }
-    };
-
-    add_field_if_not_empty("Title", entry.get_title());
-    add_field_if_not_empty("Username", entry.get_username());
-    add_field_if_not_empty("Url", entry.get_url());
-    add_field_if_not_empty("Note", entry.get("Notes"));
+    }
 
     for (key, value) in entry.fields.iter() {
         if ["Title", "UserName", "URL", "Password", "Notes"].contains(&key.as_str()) {
@@ -71,7 +87,13 @@ pub fn show_entry(entry: &Entry) -> String {
 
         let value_str = match value {
             Value::Unprotected(s) => s.to_string(),
-            Value::Protected(p) => String::from_utf8(p.unsecure().to_vec()).unwrap_or_default(),
+            Value::Protected(p) => {
+                if show_sensitive {
+                    String::from_utf8(p.unsecure().to_vec()).unwrap_or_default()
+                } else {
+                    MASKED_VALUE.to_string()
+                }
+            }
             Value::Bytes(b) => String::from_utf8(b.clone())
                 .unwrap_or_else(|_| format!("<bytes: {}>", hex::encode(b))),
         };
@@ -80,6 +102,10 @@ pub fn show_entry(entry: &Entry) -> String {
         if !trimmed_value.is_empty() {
             fields.push(format!("{key}: {trimmed_value}"));
         }
+    }
+
+    if let Some(code) = entry.get_otp().ok().and_then(|otp| otp.value_now().ok()) {
+        fields.push(format!("TOTP Code: {}", code.code));
     }
 
     fields.join("\n")
