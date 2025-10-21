@@ -121,7 +121,7 @@ fn clip(entry: &Entry, timeout: u8) -> Result<()> {
 
     let mut ticks = u64::from(timeout) * CANCEL_RQ_FREQ;
     while !CANCEL.load(std::sync::atomic::Ordering::SeqCst) && ticks > 0 {
-        if ticks % CANCEL_RQ_FREQ == 0 {
+        if ticks.is_multiple_of(CANCEL_RQ_FREQ) {
             // Note extra space after the "seconds...":
             // transition from XX digits to X digit
             // would shift whole line to the left
