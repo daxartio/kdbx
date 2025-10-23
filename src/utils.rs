@@ -196,7 +196,7 @@ pub fn skim<T: EntryPath>(
             };
 
             let props = if show_preview {
-                Some(show_entry(e.get_entry()))
+                Some(show_entry(e.get_entry(), false))
             } else {
                 None
             };
