@@ -168,6 +168,7 @@ Options:
   -f, --full-screen          Use all available screen for picker
   -p, --use-keyring          Store password for the database in the OS's keyring
   -P, --remove-key           Remove database's password from OS's keyring and exit
+      --show-sensitive       Show sensitive fields
   -d, --database <DATABASE>  KDBX file path [env: KDBX_DATABASE=]
   -k, --key-file <KEY_FILE>  Path to the key file unlocking the database [env: KDBX_KEY_FILE=]
   -h, --help                 Print help
@@ -236,7 +237,7 @@ Options:
 kdbx can be configured using environment variables.
 
 | name           | type   | default | options             |
-|----------------|--------|---------|---------------------|
+| -------------- | ------ | ------- | ------------------- |
 | KDBX_LOG       | string | 'error' | ...                 |
 | KDBX_LOG_STYLE | string | 'auto'  | auto, always, never |
 
