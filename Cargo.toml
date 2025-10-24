@@ -1,6 +1,6 @@
 [package]
 name = "kdbx"
-version = "0.10.0"
+version = "0.11.0"
 authors = ["Danil Akhtarov <daxartio@gmail.com>"]
 edition = "2024"
 description = "A secure hole for your passwords (Keepass CLI)"
