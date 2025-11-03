@@ -33,7 +33,7 @@ hex = "0.4"
 skim = "0.20"
 
 [dev-dependencies]
-assert_cmd = "2.0"
+assert_cmd = "2.1"
 predicates = "3.1"
 rstest = "0.26.1"
 
