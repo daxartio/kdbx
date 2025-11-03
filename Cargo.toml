@@ -23,7 +23,7 @@ clap_complete = "4.5"
 ctrlc = { version = "3.4", features = ["termination"] }
 env_logger = "0.11"
 human-panic = "2.0"
-keepass = { version = "0.8.5", features = ["save_kdbx4", "totp"] }
+keepass = { version = "0.8.14", features = ["save_kdbx4", "totp"] }
 libc = "0.2"
 log = { version = "0.4", features = ["max_level_trace", "release_max_level_warn"] }
 once_cell = "1.21"
