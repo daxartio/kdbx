@@ -848,9 +848,11 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "899def5c37c4fd7b2664648c28120ecec138e4d395b459e5ca34f9cce2dd77fd"
 dependencies = [
  "cfg-if",
+ "js-sys",
  "libc",
  "r-efi",
  "wasip2",
+ "wasm-bindgen",
 ]
 
 [[package]]
@@ -1141,9 +1143,9 @@ dependencies = [
 
 [[package]]
 name = "keepass"
-version = "0.8.12"
+version = "0.8.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9749aa90cffbb7e34bd5236a82c92cf76d5f1a8a833ae1672517ec8e6ee5e45d"
+checksum = "2d40cdb5c00770fddffcfc2ab4c1be0acd6cdd6e2a34da549fbbeaaf307134fe"
 dependencies = [
  "aes",
  "base32",
@@ -1159,6 +1161,7 @@ dependencies = [
  "hex",
  "hex-literal",
  "hmac",
+ "js-sys",
  "rust-argon2",
  "salsa20",
  "secstr",
