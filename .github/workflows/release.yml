@@ -37,7 +37,7 @@ jobs:
         run: |
           sudo apt install -y musl-tools
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: cargo fetch
         run: cargo fetch --target ${{ matrix.target }}
       - name: Release build
