@@ -1,42 +1,50 @@
 use std::{
     fs::File,
-    io::{Cursor, Read},
+    io::{self, Cursor, Read},
     path::Path,
 };
 
 use keepass::{
     Database, DatabaseKey,
     db::{Entry, Group, Node, Value},
-    error::DatabaseOpenError,
+    error::{DatabaseOpenError, DatabaseSaveError},
 };
 
 use crate::pwd::Pwd;
 
 const MASKED_VALUE: &str = "******";
 
-pub fn new_database_key(keyfile: Option<&Path>, password: Pwd) -> DatabaseKey {
+pub fn new_database_key(keyfile: Option<&Path>, password: Pwd) -> io::Result<DatabaseKey> {
     let password = if password.is_empty() {
         None
     } else {
         Some(&password[..])
     };
-    let keyfile = read_file(keyfile);
+    let keyfile = read_file(keyfile)?;
 
-    let key = DatabaseKey::new();
+    let mut key = DatabaseKey::new();
 
-    let key = match password {
+    key = match password {
         Some(password) => key.with_password(password),
         None => key,
     };
-    match keyfile {
-        Some(mut keyfile) => key.with_keyfile(&mut keyfile).unwrap(),
-        None => key,
+    if let Some(mut keyfile) = keyfile {
+        key = key.with_keyfile(&mut keyfile)?;
     }
+
+    Ok(key)
 }
 
-pub fn save_database(db: Database, dbfile: &Path, keyfile: Option<&Path>, password: Pwd) {
-    let key = new_database_key(keyfile, password);
-    db.save(&mut File::create(dbfile).unwrap(), key).unwrap();
+pub fn save_database(
+    db: Database,
+    dbfile: &Path,
+    keyfile: Option<&Path>,
+    password: Pwd,
+) -> Result<(), DatabaseSaveError> {
+    let key = new_database_key(keyfile, password)?;
+    let mut file = File::create(dbfile)?;
+    db.save(&mut file, key)?;
+    Ok(())
 }
 
 pub fn open_database(
@@ -44,9 +52,9 @@ pub fn open_database(
     dbfile: &Path,
     keyfile: Option<&Path>,
 ) -> Result<Database, DatabaseOpenError> {
-    let mut dbfile = read_file(Some(dbfile));
-    let key = new_database_key(keyfile, password);
-    Database::open(dbfile.as_mut().map(|f| f as &mut dyn Read).unwrap(), key)
+    let mut dbfile = read_file(Some(dbfile))?.expect("database path is always supplied");
+    let key = new_database_key(keyfile, password)?;
+    Database::open(&mut dbfile, key)
 }
 
 pub fn show_entry(entry: &Entry, show_sensitive: bool) -> String {
@@ -111,14 +119,14 @@ pub fn show_entry(entry: &Entry, show_sensitive: bool) -> String {
     fields.join("\n")
 }
 
-fn read_file(file: Option<&Path>) -> Option<Cursor<Vec<u8>>> {
+fn read_file(file: Option<&Path>) -> io::Result<Option<Cursor<Vec<u8>>>> {
     if let Some(file) = file {
-        let mut f = File::open(file).unwrap();
+        let mut f = File::open(file)?;
         let mut buf = Vec::new();
-        f.read_to_end(&mut buf).unwrap();
-        Some(Cursor::new(buf))
+        f.read_to_end(&mut buf)?;
+        Ok(Some(Cursor::new(buf)))
     } else {
-        None
+        Ok(None)
     }
 }
 
@@ -173,7 +181,10 @@ impl EntryPath for WrappedEntry<'_> {
     }
 
     fn has_totp(&self) -> bool {
-        self.entry.get_raw_otp_value().is_some()
+        self.entry
+            .get_raw_otp_value()
+            .map(|otp| !otp.trim().is_empty())
+            .unwrap_or(false)
     }
 }
 

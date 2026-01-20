@@ -52,7 +52,7 @@ pub(crate) fn run(args: Args) -> Result<()> {
         let totp_raw = STDIN.read_password();
         if totp_raw.starts_with("otpauth://") {
             totp_raw
-        } else if !totp_raw.is_empty() {
+        } else if !totp_raw.trim().is_empty() {
             format!(
                 "otpauth://totp/{}:{}?secret={}&period=30&digits=6&issuer={}",
                 entry_title,
@@ -77,14 +77,16 @@ pub(crate) fn run(args: Args) -> Result<()> {
         "Password".to_string(),
         Value::Protected(entry_password.as_bytes().into()),
     );
-    entry.fields.insert(
-        "otp".to_string(),
-        Value::Protected(totp_raw.as_bytes().into()),
-    );
+    if !totp_raw.trim().is_empty() {
+        entry.fields.insert(
+            "otp".to_string(),
+            Value::Protected(totp_raw.as_bytes().into()),
+        );
+    }
     let mut db = db;
     db.root.children.push(Node::Entry(entry));
 
-    save_database(db, &args.database, args.key_file.as_deref(), password);
+    save_database(db, &args.database, args.key_file.as_deref(), password)?;
 
     Ok(())
 }

@@ -72,7 +72,8 @@ pub(crate) fn run(args: Args) -> Result<()> {
         // Print totp to stdout when pipe used
         // e.g. `kdbx totp example.com | cat`
         if !is_tty(io::stdout()) {
-            put!("{}", get_totp(entry, args.raw).to_string());
+            let totp = get_totp(entry, args.raw)?;
+            put!("{}", totp.as_ref());
             return Ok(());
         }
         return clip(entry, args.raw);
@@ -103,7 +104,8 @@ pub(crate) fn run(args: Args) -> Result<()> {
 }
 
 fn clip(entry: &Entry, raw: bool) -> Result<()> {
-    if set_clipboard(Some(get_totp(entry, raw))).is_err() {
+    let totp = get_totp(entry, raw)?;
+    if set_clipboard(Some(totp)).is_err() {
         return Err(format!(
             "Clipboard unavailable. Try use STDOUT, i.e. `kdbx totp '{}' | cat`.",
             entry.get_title().unwrap_or_default()
@@ -114,17 +116,26 @@ fn clip(entry: &Entry, raw: bool) -> Result<()> {
     Ok(())
 }
 
-fn get_totp(entry: &Entry, raw: bool) -> Pwd {
-    if raw {
-        return entry
-            .get_raw_otp_value()
-            .unwrap_or_default()
-            .to_string()
-            .into();
+fn get_totp(entry: &Entry, raw: bool) -> Result<Pwd> {
+    let raw_value = entry
+        .get_raw_otp_value()
+        .ok_or_else(|| "Entry has no TOTP secret".to_string())?;
+    let trimmed = raw_value.trim();
+
+    if trimmed.is_empty() {
+        return Err("Entry has no TOTP secret".to_string().into());
     }
-    entry
+
+    if raw {
+        return Ok(trimmed.to_string().into());
+    }
+
+    let code = entry
         .get_otp()
-        .map(|v| v.value_now().map(|otpcode| otpcode.code).unwrap())
-        .unwrap_or_default()
-        .into()
+        .map_err(|e| format!("Unable to read TOTP: {e}"))?
+        .value_now()
+        .map_err(|e| format!("Unable to compute TOTP: {e}"))?
+        .code;
+
+    Ok(code.into())
 }

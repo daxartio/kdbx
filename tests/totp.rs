@@ -60,3 +60,20 @@ fn test_totp_no_interaction_not_found() {
     .assert()
     .stderr("Not found\n");
 }
+
+#[test]
+fn test_totp_missing_secret() {
+    let mut cmd = Command::cargo_bin(BIN_NAME).unwrap();
+    cmd.args([
+        "totp",
+        "-d",
+        "tests/files/test.kdbx",
+        "-k",
+        "tests/files/secret",
+        "test-pwd",
+    ])
+    .write_stdin("test123")
+    .assert()
+    .failure()
+    .stderr("Entry has no TOTP secret\n");
+}

@@ -32,7 +32,7 @@ pub(crate) fn run(args: Args) -> Result<()> {
 
     db.meta.database_name = Some(database_name);
 
-    let key = new_database_key(args.key_file.as_deref(), password);
+    let key = new_database_key(args.key_file.as_deref(), password)?;
 
     db.save(&mut File::create(args.database)?, key)?;
 
