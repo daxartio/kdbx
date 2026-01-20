@@ -1,11 +1,9 @@
-use assert_cmd::Command;
+use assert_cmd::cargo::cargo_bin_cmd;
 use predicates::prelude::*;
-
-const BIN_NAME: &str = env!("CARGO_PKG_NAME");
 
 #[test]
 fn test_totp() {
-    let mut cmd = Command::cargo_bin(BIN_NAME).unwrap();
+    let mut cmd = cargo_bin_cmd!();
     let assert_cmd = cmd
         .args([
             "totp",
@@ -26,7 +24,7 @@ fn test_totp() {
 
 #[test]
 fn test_totp_raw() {
-    let mut cmd = Command::cargo_bin(BIN_NAME).unwrap();
+    let mut cmd = cargo_bin_cmd!();
     let assert_cmd = cmd
         .args([
             "totp",
@@ -46,7 +44,7 @@ fn test_totp_raw() {
 
 #[test]
 fn test_totp_no_interaction_not_found() {
-    let mut cmd = Command::cargo_bin(BIN_NAME).unwrap();
+    let mut cmd = cargo_bin_cmd!();
     cmd.args([
         "totp",
         "-d",
@@ -63,7 +61,7 @@ fn test_totp_no_interaction_not_found() {
 
 #[test]
 fn test_totp_missing_secret() {
-    let mut cmd = Command::cargo_bin(BIN_NAME).unwrap();
+    let mut cmd = cargo_bin_cmd!();
     cmd.args([
         "totp",
         "-d",

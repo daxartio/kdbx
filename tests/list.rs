@@ -1,10 +1,8 @@
-use assert_cmd::Command;
-
-const BIN_NAME: &str = env!("CARGO_PKG_NAME");
+use assert_cmd::cargo::cargo_bin_cmd;
 
 #[test]
 fn test_list() {
-    let mut cmd = Command::cargo_bin(BIN_NAME).unwrap();
+    let mut cmd = cargo_bin_cmd!();
     let assert_cmd = cmd
         .args([
             "list",

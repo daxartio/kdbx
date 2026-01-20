@@ -1,10 +1,8 @@
-use assert_cmd::Command;
-
-const BIN_NAME: &str = env!("CARGO_PKG_NAME");
+use assert_cmd::cargo::cargo_bin_cmd;
 
 #[test]
 fn test_show() {
-    let mut cmd = Command::cargo_bin(BIN_NAME).unwrap();
+    let mut cmd = cargo_bin_cmd!();
     let assert_cmd = cmd
         .args([
             "show",
@@ -23,7 +21,7 @@ fn test_show() {
 
 #[test]
 fn test_show_no_interaction_not_found() {
-    let mut cmd = Command::cargo_bin(BIN_NAME).unwrap();
+    let mut cmd = cargo_bin_cmd!();
     cmd.args([
         "show",
         "-d",
@@ -40,7 +38,7 @@ fn test_show_no_interaction_not_found() {
 
 #[test]
 fn test_show_sensitive() {
-    let mut cmd = Command::cargo_bin(BIN_NAME).unwrap();
+    let mut cmd = cargo_bin_cmd!();
     let assert_cmd = cmd
         .args([
             "show",
