@@ -2,7 +2,8 @@ use std::{borrow::Cow, error, fmt, io, path::Path};
 
 use keepass::{Database, error::DatabaseOpenError as KeepassOpenError};
 use log::*;
-use skim::prelude::*;
+use regex::Regex;
+use skim::{prelude::*, tui::options::PreviewLayout};
 
 use crate::{
     STDIN,
@@ -165,16 +166,16 @@ pub fn skim<T: EntryPath>(
             "ctrl-r:ignore".to_string(), // rotate mode
         ])
         .delimiter(if hide_groups {
-            "".to_string()
+            Regex::new(r"$^").expect("valid regex")
         } else {
-            "/".to_string()
+            Regex::new("/").expect("valid regex")
         })
         .preview(if show_preview {
             Some("".to_string())
         } else {
             None
         })
-        .preview_window("right:65%".to_string())
+        .preview_window(PreviewLayout::from("right:65%"))
         .build()
         .expect("well formed SkimOptions");
 
@@ -208,12 +209,13 @@ pub fn skim<T: EntryPath>(
     // No more input expected, dropping sender
     drop(tx);
 
-    Skim::run_with(&opts, Some(rx))
+    Skim::run_with(opts, Some(rx))
         .map(|res| {
             if res.is_abort || res.selected_items.len() != 1 {
                 None
             } else {
                 res.selected_items[0]
+                    .item
                     .as_ref()
                     .as_any()
                     .downcast_ref::<EntryItem>()

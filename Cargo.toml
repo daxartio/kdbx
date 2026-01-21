@@ -27,10 +27,11 @@ keepass = { version = "0.8", features = ["save_kdbx4", "totp"] }
 libc = "0.2"
 log = { version = "0.4", features = ["max_level_trace", "release_max_level_warn"] }
 once_cell = "1.21"
+regex = "1.11"
 hex = "0.4"
 
 [target.'cfg(not(windows))'.dependencies]
-skim = "0.20"
+skim = { version = "1.3", default-features = false }
 
 [dev-dependencies]
 assert_cmd = "2.0"
