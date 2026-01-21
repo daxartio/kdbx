@@ -39,8 +39,8 @@ pub(crate) fn run(args: Args) -> Result<()> {
     Ok(())
 }
 
-fn read_password(promt: &str) -> Pwd {
-    put!("{}", promt);
+fn read_password(prompt: &str) -> Pwd {
+    put!("{}", prompt);
     STDIN.read_password()
 }
 
