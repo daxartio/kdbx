@@ -1,7 +1,11 @@
 use std::{io, path::PathBuf};
 
 use clap::ValueHint;
-use keepass::db::Entry;
+use keepass::{
+    db::{Entry, TOTP},
+    error::TOTPError,
+};
+use url::{Url, form_urlencoded};
 
 use crate::{
     Result,
@@ -130,12 +134,98 @@ fn get_totp(entry: &Entry, raw: bool) -> Result<Pwd> {
         return Ok(trimmed.to_string().into());
     }
 
-    let code = entry
-        .get_otp()
-        .map_err(|e| format!("Unable to read TOTP: {e}"))?
+    let code = parse_totp(trimmed)?
         .value_now()
         .map_err(|e| format!("Unable to compute TOTP: {e}"))?
         .code;
 
     Ok(code.into())
+}
+
+fn parse_totp(raw_value: &str) -> Result<TOTP> {
+    match raw_value.parse::<TOTP>() {
+        Ok(otp) => Ok(otp),
+        Err(TOTPError::Base32) => {
+            let Some(normalized) = normalize_totp_secret(raw_value) else {
+                return Err("Unable to read TOTP: Base32 decoding error"
+                    .to_string()
+                    .into());
+            };
+
+            normalized
+                .parse::<TOTP>()
+                .map_err(|e| format!("Unable to read TOTP: {e}").into())
+        }
+        Err(err) => Err(format!("Unable to read TOTP: {err}").into()),
+    }
+}
+
+fn normalize_totp_secret(raw_value: &str) -> Option<String> {
+    let mut url = Url::parse(raw_value).ok()?;
+    let mut pairs: Vec<(String, String)> = url.query_pairs().into_owned().collect();
+    let mut changed = false;
+
+    for (key, value) in pairs.iter_mut() {
+        if key != "secret" {
+            continue;
+        }
+
+        let normalized = normalize_base32_secret(value);
+        if normalized != *value {
+            *value = normalized;
+            changed = true;
+        }
+    }
+
+    if !changed {
+        return None;
+    }
+
+    let mut serializer = form_urlencoded::Serializer::new(String::new());
+    for (key, value) in pairs {
+        serializer.append_pair(&key, &value);
+    }
+
+    url.set_query(Some(&serializer.finish()));
+
+    Some(url.to_string())
+}
+
+fn normalize_base32_secret(secret: &str) -> String {
+    let mut normalized: String = secret
+        .chars()
+        .filter(|c| !c.is_whitespace() && *c != '-')
+        .map(|c| c.to_ascii_uppercase())
+        .collect();
+
+    if !normalized.len().is_multiple_of(8) {
+        normalized.push_str(&"=".repeat(8 - (normalized.len() % 8)));
+    }
+
+    normalized
+}
+
+#[cfg(test)]
+mod tests {
+    use keepass::db::Value;
+
+    use super::*;
+
+    #[test]
+    fn parses_secret_with_spaces() {
+        let mut entry = Entry::new();
+        entry.fields.insert(
+            "otp".to_string(),
+            Value::Unprotected(
+                "otpauth://totp/example:demo?secret=JBSW%20Y3DP%20EHPK%203PXP&issuer=example&\
+                 digits=6"
+                    .to_string(),
+            ),
+        );
+
+        let otp = parse_totp(entry.get_raw_otp_value().unwrap()).expect("parsed totp");
+
+        assert_eq!(otp.get_secret(), "JBSWY3DPEHPK3PXP");
+        assert_eq!(otp.value_at(0).code.len(), 6);
+    }
 }

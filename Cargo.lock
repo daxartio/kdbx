@@ -1500,6 +1500,7 @@ dependencies = [
  "rstest",
  "security-framework",
  "skim",
+ "url",
 ]
 
 [[package]]
