@@ -15,19 +15,12 @@ use crate::pwd::Pwd;
 const MASKED_VALUE: &str = "******";
 
 pub fn new_database_key(keyfile: Option<&Path>, password: Pwd) -> io::Result<DatabaseKey> {
-    let password = if password.is_empty() {
-        None
-    } else {
-        Some(&password[..])
-    };
+    let password = &password[..];
     let keyfile = read_file(keyfile)?;
 
     let mut key = DatabaseKey::new();
+    key = key.with_password(password);
 
-    key = match password {
-        Some(password) => key.with_password(password),
-        None => key,
-    };
     if let Some(mut keyfile) = keyfile {
         key = key.with_keyfile(&mut keyfile)?;
     }
