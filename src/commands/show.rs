@@ -53,6 +53,9 @@ pub(crate) fn run(args: Args) -> Result<()> {
     if !args.database.exists() {
         return Err("File does not exist".to_string().into());
     }
+    if args.database.extension() != Some("kdbx".as_ref()) {
+        return Err("File isn't a KeePass database".to_string().into());
+    }
     let (db, _) = open_database_interactively(
         &args.database,
         args.key_file.as_deref(),
