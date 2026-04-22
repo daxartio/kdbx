@@ -17,13 +17,7 @@ pub struct Args {
 }
 
 pub(crate) fn run(args: Args) -> Result<()> {
-    let mut database_path = args.database;
-
-    if database_path.extension() != Some("kdbx".as_ref()) {
-        wout!("Appended '.kdbx' to the filename");
-        database_path.add_extension("kdbx");
-    }
-    if database_path.exists() {
+    if args.database.exists() {
         return Err("File exists".to_string().into());
     }
     let password = read_password("Password: ");
@@ -40,7 +34,7 @@ pub(crate) fn run(args: Args) -> Result<()> {
 
     let key = new_database_key(args.key_file.as_deref(), password)?;
 
-    db.save(&mut File::create(database_path)?, key)?;
+    db.save(&mut File::create(args.database)?, key)?;
 
     Ok(())
 }
