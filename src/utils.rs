@@ -1,4 +1,10 @@
-use std::{borrow::Cow, error, fmt, io, path::Path};
+use std::{
+    borrow::Cow,
+    error, fmt,
+    fs::File,
+    io::{self, Read},
+    path::Path,
+};
 
 use keepass::{Database, error::DatabaseOpenError as KeepassOpenError};
 use log::*;
@@ -41,6 +47,7 @@ macro_rules! werr {
 
 #[derive(Debug)]
 pub enum DatabaseOpenError {
+    NotADatabase,
     NoInteraction,
     KeepassOpenError(KeepassOpenError),
 }
@@ -48,6 +55,7 @@ pub enum DatabaseOpenError {
 impl fmt::Display for DatabaseOpenError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
+            DatabaseOpenError::NotADatabase => write!(f, "Invalid file"),
             DatabaseOpenError::NoInteraction => write!(f, "No interaction"),
             DatabaseOpenError::KeepassOpenError(..) => write!(f, "Invalid password or key"),
         }
@@ -57,6 +65,7 @@ impl fmt::Display for DatabaseOpenError {
 impl error::Error for DatabaseOpenError {
     fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         match *self {
+            DatabaseOpenError::NotADatabase => None,
             DatabaseOpenError::NoInteraction => None,
             DatabaseOpenError::KeepassOpenError(ref e) => Some(e),
         }
@@ -69,6 +78,22 @@ impl From<KeepassOpenError> for DatabaseOpenError {
     }
 }
 
+fn verify_database_signature(dbfile: &Path) -> Result<bool, Box<dyn error::Error>> {
+    // Read the first 8 bytes that will contain the correct signature if the given file is a KeePass database
+    let mut file = File::open(dbfile)?;
+    let mut signature_bytes = [0; 8];
+    file.read_exact(&mut signature_bytes)?;
+    let signature = u64::from_le_bytes(signature_bytes);
+
+    // https://keepass.info/help/kb/kdbx.html
+    let correct_signature_bytes: [u8; 8] = hex::decode("B54BFB679AA2D903")?
+        .try_into()
+        .map_err(|_| "")?;
+    let correct_signature = u64::from_be_bytes(correct_signature_bytes);
+
+    Ok(signature == correct_signature)
+}
+
 pub fn open_database_interactively(
     dbfile: &Path,
     keyfile: Option<&Path>,
@@ -76,6 +101,10 @@ pub fn open_database_interactively(
     remove_key: bool,
     no_interaction: bool,
 ) -> Result<(Database, Pwd), DatabaseOpenError> {
+    if !verify_database_signature(dbfile).map_err(|_| DatabaseOpenError::NotADatabase)? {
+        return Err(DatabaseOpenError::NotADatabase);
+    }
+
     if remove_key
         && let Some(keyring) = Keyring::from_db_path(dbfile)
         && let Err(msg) = keyring.delete_password()
