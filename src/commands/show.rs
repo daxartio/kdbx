@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{ops::Deref, path::PathBuf};
 
 use clap::ValueHint;
 
@@ -63,9 +63,9 @@ pub(crate) fn run(args: Args) -> Result<()> {
     let query = args.entry.as_ref().map(String::as_ref);
 
     if let Some(query) = query
-        && let Some(entry) = find_entry(query, &db.root)
+        && let Some(entry) = find_entry(query, &db)
     {
-        put!("{}", show_entry(entry, args.show_sensitive));
+        put!("{}", show_entry(entry.deref(), args.show_sensitive));
         return Ok(());
     }
 
@@ -73,15 +73,15 @@ pub(crate) fn run(args: Args) -> Result<()> {
         return Err("Not found".to_string().into());
     }
 
-    if let Some(wrapped_entry) = skim(
-        &get_entries(&db.root, ""),
+    if let Some(entry) = skim(
+        get_entries(&db).collect::<Vec<_>>(),
         query.map(String::from),
         args.no_group,
         args.preview,
         args.full_screen,
         false,
     ) {
-        put!("{}", show_entry(wrapped_entry.entry, args.show_sensitive));
+        put!("{}", show_entry(&entry, args.show_sensitive));
         return Ok(());
     }
 

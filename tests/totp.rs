@@ -73,5 +73,5 @@ fn test_totp_missing_secret() {
     .write_stdin("test123")
     .assert()
     .failure()
-    .stderr("Entry has no TOTP secret\n");
+    .stderr("No OTP record found\n");
 }

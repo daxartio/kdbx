@@ -3,10 +3,15 @@ use std::{
     error, fmt,
     fs::File,
     io::{self, Read},
+    ops::Deref,
     path::Path,
 };
 
-use keepass::{Database, error::DatabaseOpenError as KeepassOpenError};
+use keepass::{
+    Database,
+    db::{EntryRef, fields},
+    error::DatabaseOpenError as KeepassOpenError,
+};
 use log::*;
 use regex::Regex;
 use skim::{prelude::*, tui::options::PreviewLayout};
@@ -169,14 +174,14 @@ struct EntryItem {
     props: Option<String>,
 }
 
-pub fn skim<T: EntryPath>(
-    entries: &[T],
+pub fn skim<'a>(
+    entries: Vec<EntryRef<'a>>,
     query: Option<String>,
     hide_groups: bool,
     show_preview: bool,
     full_screen: bool,
     with_totp: bool,
-) -> Option<&T> {
+) -> Option<EntryRef<'a>> {
     let opts = SkimOptionsBuilder::default()
         .multi(false)
         .reverse(true)
@@ -210,9 +215,15 @@ pub fn skim<T: EntryPath>(
 
     let (tx, rx): (SkimItemSender, SkimItemReceiver) = unbounded();
 
-    let entries = entries
-        .iter()
-        .filter(|e| if with_totp { e.has_totp() } else { true })
+    let mut entries = entries
+        .into_iter()
+        .filter(|e| {
+            if with_totp {
+                e.get_raw_otp_value().is_some()
+            } else {
+                true
+            }
+        })
         .collect::<Vec<_>>();
 
     entries
@@ -220,13 +231,13 @@ pub fn skim<T: EntryPath>(
         .enumerate()
         .map(|(idx, e)| {
             let title = if hide_groups {
-                e.get_title()
+                e.get(fields::TITLE).unwrap_or_default().to_string()
             } else {
                 e.entry_path()
             };
 
             let props = if show_preview {
-                Some(show_entry(e.get_entry(), false))
+                Some(show_entry(e.deref(), false))
             } else {
                 None
             };
@@ -238,7 +249,7 @@ pub fn skim<T: EntryPath>(
     // No more input expected, dropping sender
     drop(tx);
 
-    Skim::run_with(opts, Some(rx))
+    let res = Skim::run_with(opts, Some(rx))
         .map(|res| {
             if res.is_abort || res.selected_items.len() != 1 {
                 None
@@ -248,10 +259,16 @@ pub fn skim<T: EntryPath>(
                     .as_ref()
                     .as_any()
                     .downcast_ref::<EntryItem>()
-                    .map(|ei: &EntryItem| entries[ei.idx])
+                    .map(|ei: &EntryItem| ei.idx)
             }
         })
-        .unwrap()
+        .unwrap();
+
+    if let Some(idx) = res {
+        Some(entries.remove(idx))
+    } else {
+        None
+    }
 }
 
 impl SkimItem for EntryItem {

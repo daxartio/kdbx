@@ -1,7 +1,7 @@
 use std::{io, path::PathBuf, thread, time};
 
 use clap::ValueHint;
-use keepass::db::Entry;
+use keepass::db::EntryRef;
 use log::*;
 
 use crate::{
@@ -68,7 +68,7 @@ pub(crate) fn run(args: Args) -> Result<()> {
     let query = args.entry.as_ref().map(String::as_ref);
 
     if let Some(query) = query
-        && let Some(entry) = find_entry(query, &db.root)
+        && let Some(entry) = find_entry(query, &db)
     {
         // Print password to stdout when pipe used
         // e.g. `kdbx pwd example.com | cat`
@@ -76,7 +76,7 @@ pub(crate) fn run(args: Args) -> Result<()> {
             put!("{}", entry.get_password().unwrap_or_default());
             return Ok(());
         }
-        return clip(entry, args.timeout);
+        return clip(&entry, args.timeout);
     }
 
     if args.no_interaction {
@@ -89,21 +89,21 @@ pub(crate) fn run(args: Args) -> Result<()> {
         return Err(format!("No single match for {}.", query.unwrap_or("[empty]")).into());
     }
 
-    if let Some(wrapped_entry) = skim(
-        &get_entries(&db.root, ""),
+    if let Some(entry) = skim(
+        get_entries(&db).collect::<Vec<_>>(),
         query.map(String::from),
         args.no_group,
         args.preview,
         args.full_screen,
         false,
     ) {
-        clip(wrapped_entry.entry, args.timeout)?
+        clip(&entry, args.timeout)?
     }
 
     Ok(())
 }
 
-fn clip(entry: &Entry, timeout: u8) -> Result<()> {
+fn clip(entry: &EntryRef<'_>, timeout: u8) -> Result<()> {
     let pwd: Pwd = entry.get_password().unwrap_or_default().to_string().into();
 
     if set_clipboard(Some(pwd)).is_err() {

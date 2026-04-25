@@ -6,7 +6,7 @@ use std::{
 
 use keepass::{
     Database, DatabaseKey,
-    db::{Entry, Group, Node, Value},
+    db::{Entry, EntryId, EntryRef, GroupId, fields},
     error::{DatabaseOpenError, DatabaseSaveError},
 };
 
@@ -86,20 +86,8 @@ pub fn show_entry(entry: &Entry, show_sensitive: bool) -> String {
             continue;
         }
 
-        let value_str = match value {
-            Value::Unprotected(s) => s.to_string(),
-            Value::Protected(p) => {
-                if show_sensitive {
-                    String::from_utf8(p.unsecure().to_vec()).unwrap_or_default()
-                } else {
-                    MASKED_VALUE.to_string()
-                }
-            }
-            Value::Bytes(b) => String::from_utf8(b.clone())
-                .unwrap_or_else(|_| format!("<bytes: {}>", hex::encode(b))),
-        };
+        let trimmed_value = value.get().trim();
 
-        let trimmed_value = value_str.trim();
         if !trimmed_value.is_empty() {
             fields.push(format!("{key}: {trimmed_value}"));
         }
@@ -123,105 +111,102 @@ fn read_file(file: Option<&Path>) -> io::Result<Option<Cursor<Vec<u8>>>> {
     }
 }
 
-pub fn get_entries(group: &Group, path: impl ToString) -> Vec<WrappedEntry<'_>> {
-    let mut entries = Vec::with_capacity(
-        group
-            .children
-            .iter()
-            .filter(|v| match v {
-                Node::Entry(_) => true,
-                Node::Group(_) => false,
-            })
-            .count(),
-    );
-    group.children.iter().for_each(|v| match v {
-        Node::Entry(entry) => entries.push(WrappedEntry {
-            path: format!("{}/{}", path.to_string(), group.name),
-            entry,
-        }),
-        Node::Group(child) => {
-            if !child.children.is_empty() {
-                entries.extend(get_entries(
-                    child,
-                    format!("{}/{}", path.to_string(), group.name),
-                ))
-            }
+/// Returns an iterator over all entries in the database, sorted by their path.
+pub fn get_entries(db: &Database) -> impl Iterator<Item = EntryRef<'_>> {
+    let mut ids = Vec::new();
+
+    fn collect_entries(db: &Database, group_id: GroupId, ids: &mut Vec<EntryId>) {
+        let Some(group) = db.group(group_id) else {
+            return;
+        };
+
+        let mut entries = Vec::new();
+        for entry in group.entries() {
+            let title = entry.get(fields::TITLE).unwrap_or_default().to_string();
+            entries.push((title, entry.id()));
         }
-    });
-    entries
-}
 
-pub struct WrappedEntry<'a> {
-    pub path: String,
-    pub entry: &'a Entry,
-}
+        entries.sort_by(|a, b| a.0.cmp(&b.0));
+        ids.extend(entries.into_iter().map(|(_, id)| id));
 
-impl EntryPath for WrappedEntry<'_> {
-    fn entry_path(&self) -> String {
-        format!(
-            "{}/{}",
-            self.path,
-            self.entry.get_title().unwrap_or_default().to_owned(),
-        )
-    }
-
-    fn get_entry(&self) -> &Entry {
-        self.entry
-    }
-
-    fn get_title(&self) -> String {
-        self.entry.get_title().unwrap_or_default().to_owned()
-    }
-
-    fn has_totp(&self) -> bool {
-        self.entry
-            .get_raw_otp_value()
-            .map(|otp| !otp.trim().is_empty())
-            .unwrap_or(false)
-    }
-}
-
-pub fn find_entry<'a>(query: &str, group: &'a Group) -> Option<&'a Entry> {
-    get_entries(group, "").iter().find_map(|e| {
-        let entry_path = e.entry_path();
-        if entry_path.ends_with(query) {
-            Some(e.entry)
-        } else {
-            None
+        let mut groups = Vec::new();
+        for subgroup in group.groups() {
+            let name = subgroup.name.to_string();
+            groups.push((name, subgroup.id()));
         }
-    })
+
+        groups.sort_by(|a, b| a.0.cmp(&b.0));
+        for (_, subgroup_id) in groups {
+            collect_entries(db, subgroup_id, ids);
+        }
+    }
+
+    collect_entries(db, db.root().id(), &mut ids);
+
+    ids.into_iter().filter_map(move |id| db.entry(id))
+}
+
+pub fn find_entry<'a>(query: &str, db: &'a Database) -> Option<EntryRef<'a>> {
+    for entry in get_entries(db) {
+        if entry.entry_path().ends_with(query) {
+            return Some(entry);
+        }
+    }
+
+    None
 }
 
 pub trait EntryPath {
     fn entry_path(&self) -> String;
-    fn get_entry(&self) -> &Entry;
-    fn get_title(&self) -> String;
-    fn has_totp(&self) -> bool;
+}
+
+impl EntryPath for EntryRef<'_> {
+    fn entry_path(&self) -> String {
+        let mut path = Vec::new();
+
+        path.push(self.get_title().unwrap_or_default().to_string());
+
+        let mut current = Some(self.parent().id());
+        while let Some(group) = current.and_then(|id| self.database().group(id)) {
+            path.push(group.name.to_string());
+            current = group.parent().map(|p| p.id());
+        }
+
+        path.push("".to_string());
+
+        path.reverse();
+        path.join("/")
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use keepass::db::Value;
+    use keepass::db::fields;
 
     use super::*;
 
     #[test]
     fn test_find_entry() {
-        let mut group = Group::new("root");
-        let mut child = Group::new("child");
-        let mut entry = Entry::new();
-        entry.fields.insert(
-            "Title".to_string(),
-            Value::Unprotected("My Title".to_string()),
+        let mut db = Database::new();
+
+        let entry = db
+            .root_mut()
+            .edit(|g| g.name = "root".to_string())
+            .add_group()
+            .edit(|g| g.name = "child".to_string())
+            .add_entry()
+            .edit(|e| e.set_unprotected(fields::TITLE, "My Title".to_string()))
+            .id();
+
+        assert_eq!(
+            db.entry(entry).unwrap().entry_path(),
+            "/root/child/My Title"
         );
 
-        child.children.push(Node::Entry(entry.clone()));
-        group.children.push(Node::Group(child));
-
-        assert_eq!(find_entry("/root/child/My Title", &group), Some(&entry));
-        assert_eq!(find_entry("child/My Title", &group), Some(&entry));
-        assert_eq!(find_entry("My Title", &group), Some(&entry));
-        assert_eq!(find_entry("Title", &group), Some(&entry));
-        assert_eq!(find_entry("My Other Title", &group), None);
+        assert!(find_entry("/root/child/My Title", &db).is_some());
+        assert!(find_entry("child/My Title", &db).is_some());
+        assert!(find_entry("My Title", &db).is_some());
+        assert!(find_entry("Title", &db).is_some());
+        assert!(find_entry("My Other Title", &db).is_none());
     }
 }
