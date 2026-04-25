@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use clap::ValueHint;
-use keepass::db::{Entry, Node, Value};
+use keepass::db::fields;
 
 use crate::{Result, STDIN, keepass::save_database, utils::open_database_interactively};
 
@@ -28,7 +28,7 @@ pub(crate) fn run(args: Args) -> Result<()> {
     if !args.database.exists() {
         return Err("File does not exist".to_string().into());
     }
-    let (db, password) = open_database_interactively(
+    let (mut db, password) = open_database_interactively(
         &args.database,
         args.key_file.as_deref(),
         args.use_keyring,
@@ -66,25 +66,15 @@ pub(crate) fn run(args: Args) -> Result<()> {
         }
     };
 
-    let mut entry = Entry::new();
-    entry
-        .fields
-        .insert("Title".to_string(), Value::Unprotected(entry_title));
-    entry
-        .fields
-        .insert("UserName".to_string(), Value::Unprotected(entry_username));
-    entry.fields.insert(
-        "Password".to_string(),
-        Value::Protected(entry_password.as_bytes().into()),
-    );
-    if !totp_raw.trim().is_empty() {
-        entry.fields.insert(
-            "otp".to_string(),
-            Value::Protected(totp_raw.as_bytes().into()),
-        );
-    }
-    let mut db = db;
-    db.root.children.push(Node::Entry(entry));
+    db.root_mut().add_entry().edit(|entry| {
+        entry.set_unprotected(fields::TITLE, entry_title);
+        entry.set_unprotected(fields::USERNAME, entry_username);
+        entry.set_protected(fields::PASSWORD, entry_password.as_ref());
+
+        if !totp_raw.trim().is_empty() {
+            entry.set_protected("otp", totp_raw.as_ref());
+        }
+    });
 
     save_database(db, &args.database, args.key_file.as_deref(), password)?;
 

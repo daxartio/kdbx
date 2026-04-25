@@ -28,7 +28,7 @@ pub(crate) fn run(args: Args) -> Result<()> {
 
     let database_name = read_db_name();
 
-    let mut db = Database::new(Default::default());
+    let mut db = Database::new();
 
     db.meta.database_name = Some(database_name);
 

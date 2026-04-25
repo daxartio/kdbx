@@ -43,12 +43,11 @@ pub(crate) fn run(args: Args) -> Result<()> {
         false,
     )?;
 
-    let entries = &get_entries(&db.root, "");
-    for e in entries.iter() {
+    for entry in get_entries(&db) {
         if args.no_group {
-            wout!("{}", e.get_title());
+            wout!("{}", entry.get_title().unwrap_or_default());
         } else {
-            wout!("{}", e.entry_path());
+            wout!("{}", entry.entry_path());
         }
     }
 
