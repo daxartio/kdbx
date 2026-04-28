@@ -1,13 +1,19 @@
-use std::{convert::AsRef, ops::Deref, ptr, sync::atomic};
+use std::{convert::AsRef, ops::Deref};
 
-use log::*;
+use zeroize::Zeroizing;
 
-#[derive(PartialEq, Clone, Default)]
-pub struct Pwd(String);
+#[derive(Clone)]
+pub struct Pwd(Zeroizing<String>);
+
+impl Default for Pwd {
+    fn default() -> Self {
+        Self(String::default().into())
+    }
+}
 
 impl From<String> for Pwd {
     fn from(pwd: String) -> Self {
-        Pwd(pwd)
+        Self(pwd.into())
     }
 }
 
@@ -15,7 +21,7 @@ impl Deref for Pwd {
     type Target = str;
 
     fn deref(&self) -> &Self::Target {
-        self.0.as_ref()
+        self.0.as_str()
     }
 }
 
@@ -25,20 +31,8 @@ impl AsRef<str> for Pwd {
     }
 }
 
-impl Drop for Pwd {
-    fn drop(&mut self) {
-        info!("zeroing password memory");
-        zero_memory(&mut self.0)
+impl PartialEq for Pwd {
+    fn eq(&self, other: &Self) -> bool {
+        self.as_ref() == other.as_ref()
     }
-}
-
-fn zero_memory(pwd: &mut str) {
-    unsafe {
-        for byte in pwd.as_bytes_mut() {
-            ptr::write_volatile(byte, 0x00);
-        }
-    }
-
-    atomic::fence(atomic::Ordering::SeqCst);
-    atomic::compiler_fence(atomic::Ordering::SeqCst);
 }
