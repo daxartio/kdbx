@@ -83,6 +83,11 @@ impl From<KeepassOpenError> for DatabaseOpenError {
     }
 }
 
+pub enum DatabaseOpenResult {
+    Opened(Box<Database>, Pwd),
+    KeyRemoved,
+}
+
 fn verify_database_signature(dbfile: &Path) -> Result<bool, Box<dyn error::Error>> {
     // Read the first 8 bytes that will contain the correct signature if the given file is a KeePass database
     let mut file = File::open(dbfile)?;
@@ -105,7 +110,7 @@ pub fn open_database_interactively(
     use_keyring: bool,
     remove_key: bool,
     no_interaction: bool,
-) -> Result<(Database, Pwd), DatabaseOpenError> {
+) -> Result<DatabaseOpenResult, DatabaseOpenError> {
     if !verify_database_signature(dbfile).map_err(|_| DatabaseOpenError::NotADatabase)? {
         return Err(DatabaseOpenError::NotADatabase);
     }
@@ -115,6 +120,10 @@ pub fn open_database_interactively(
         && let Err(msg) = keyring.delete_password()
     {
         werr!("No key removed for `{}`. {}", dbfile.to_string_lossy(), msg);
+    }
+
+    if remove_key {
+        return Ok(DatabaseOpenResult::KeyRemoved);
     }
 
     let keyring = if use_keyring {
@@ -128,7 +137,7 @@ pub fn open_database_interactively(
 
     if let Some(Ok(password)) = keyring.as_ref().map(|k| k.get_password()) {
         if let Ok(db) = open_database(password.clone(), dbfile, keyfile) {
-            return Ok((db, password));
+            return Ok(DatabaseOpenResult::Opened(Box::new(db), password));
         }
 
         warn!("removing wrong password in the keyring");
@@ -138,7 +147,10 @@ pub fn open_database_interactively(
     // Try read password from pipe
     if !is_tty(io::stdin()) {
         let password = STDIN.read_password();
-        return Ok((open_database(password.clone(), dbfile, keyfile)?, password));
+        return Ok(DatabaseOpenResult::Opened(
+            Box::new(open_database(password.clone(), dbfile, keyfile)?),
+            password,
+        ));
     }
 
     if no_interaction {
@@ -161,7 +173,7 @@ pub fn open_database_interactively(
         att -= 1;
 
         if db.is_ok() || att == 0 {
-            break Ok((db?, password));
+            break Ok(DatabaseOpenResult::Opened(Box::new(db?), password));
         }
 
         wout!("{} attempt(s) left.", att);

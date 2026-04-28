@@ -5,7 +5,7 @@ use clap::ValueHint;
 use crate::{
     Result,
     keepass::{find_entry, get_entries, show_entry},
-    utils::{open_database_interactively, skim},
+    utils::{DatabaseOpenResult, open_database_interactively, skim},
 };
 
 #[derive(clap::Args)]
@@ -53,17 +53,20 @@ pub(crate) fn run(args: Args) -> Result<()> {
     if !args.database.exists() {
         return Err("File does not exist".to_string().into());
     }
-    let (db, _) = open_database_interactively(
+    let DatabaseOpenResult::Opened(db, _) = open_database_interactively(
         &args.database,
         args.key_file.as_deref(),
         args.use_keyring,
         args.remove_key,
         args.no_interaction,
-    )?;
+    )?
+    else {
+        return Ok(());
+    };
     let query = args.entry.as_ref().map(String::as_ref);
 
     if let Some(query) = query
-        && let Some(entry) = find_entry(query, &db)
+        && let Some(entry) = find_entry(query, &db)?
     {
         put!("{}", show_entry(entry.deref(), args.show_sensitive));
         return Ok(());

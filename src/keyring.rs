@@ -65,9 +65,9 @@ impl Keyring {
     pub fn get_password(&self) -> Result<Pwd, String> {
         self.keychain
             .find_generic_password(&self.keyname, &self.account)
-            .map(|(pwd, _)| unsafe { String::from_utf8_unchecked(pwd.to_owned()) })
-            .map(Pwd::from)
             .map_err(|e| format!("{e}"))
+            .and_then(|(pwd, _)| String::from_utf8(pwd.to_owned()).map_err(|e| format!("{e}")))
+            .map(Pwd::from)
     }
 
     pub fn set_password(&self, password: &str) -> Result<(), String> {
@@ -133,7 +133,7 @@ impl Keyring {
                 return Err(format!("{}", io::Error::last_os_error()));
             }
 
-            String::from_utf8_unchecked(data)
+            String::from_utf8(data).map_err(|e| format!("{e}"))?
         };
 
         Ok(pwd.into())

@@ -1,4 +1,5 @@
 use std::{
+    error, fmt,
     fs::File,
     io::{self, Cursor, Read},
     path::Path,
@@ -51,53 +52,71 @@ pub fn open_database(
 }
 
 pub fn show_entry(entry: &Entry, show_sensitive: bool) -> String {
-    let mut fields: Vec<String> = Vec::new();
+    let mut lines: Vec<String> = Vec::new();
 
     let standard_fields = [
-        ("Title", entry.get_title()),
-        ("Username", entry.get_username()),
-        ("Password", entry.get_password()),
-        ("URL", entry.get_url()),
-        ("Notes", entry.get("Notes")),
+        (fields::TITLE, "Title"),
+        (fields::USERNAME, "Username"),
+        (fields::PASSWORD, "Password"),
+        (fields::URL, "URL"),
+        (fields::NOTES, "Notes"),
     ];
 
-    for (key, value) in standard_fields {
-        if key == "Password" {
-            if let Some(password) = value {
-                if show_sensitive {
-                    let trimmed_val = password.trim();
-                    if !trimmed_val.is_empty() {
-                        fields.push(format!("Password: {trimmed_val}"));
-                    }
-                } else {
-                    fields.push(format!("Password: {MASKED_VALUE}"));
-                }
-            }
-        } else if let Some(val) = value {
-            let trimmed_val = val.trim();
-            if !trimmed_val.is_empty() {
-                fields.push(format!("{key}: {trimmed_val}"));
-            }
-        }
+    for (key, label) in standard_fields {
+        push_field(&mut lines, entry, key, label, show_sensitive);
     }
 
     for (key, value) in entry.fields.iter() {
-        if ["Title", "UserName", "URL", "Password", "Notes"].contains(&key.as_str()) {
+        if fields::KNOWN_FIELDS.contains(&key.as_str()) {
+            continue;
+        }
+
+        if key == fields::OTP {
+            push_field(&mut lines, entry, key, key, show_sensitive);
             continue;
         }
 
         let trimmed_value = value.get().trim();
+        if trimmed_value.is_empty() {
+            continue;
+        }
 
-        if !trimmed_value.is_empty() {
-            fields.push(format!("{key}: {trimmed_value}"));
+        if value.is_protected() && !show_sensitive {
+            lines.push(format!("{key}: {MASKED_VALUE}"));
+        } else {
+            lines.push(format!("{key}: {trimmed_value}"));
         }
     }
 
-    if let Some(code) = entry.get_otp().ok().and_then(|otp| otp.value_now().ok()) {
-        fields.push(format!("TOTP Code: {}", code.code));
+    if show_sensitive && let Some(code) = entry.get_otp().ok().and_then(|otp| otp.value_now().ok())
+    {
+        lines.push(format!("TOTP Code: {}", code.code));
     }
 
-    fields.join("\n")
+    lines.join("\n")
+}
+
+fn push_field(
+    lines: &mut Vec<String>,
+    entry: &Entry,
+    key: &str,
+    label: &str,
+    show_sensitive: bool,
+) {
+    let Some(value) = entry.fields.get(key) else {
+        return;
+    };
+
+    let trimmed_value = value.get().trim();
+    if trimmed_value.is_empty() {
+        return;
+    }
+
+    if (key == fields::PASSWORD || key == fields::OTP || value.is_protected()) && !show_sensitive {
+        lines.push(format!("{label}: {MASKED_VALUE}"));
+    } else {
+        lines.push(format!("{label}: {trimmed_value}"));
+    }
 }
 
 fn read_file(file: Option<&Path>) -> io::Result<Option<Cursor<Vec<u8>>>> {
@@ -146,8 +165,49 @@ pub fn get_entries(db: &Database) -> impl Iterator<Item = EntryRef<'_>> {
     ids.into_iter().filter_map(move |id| db.entry(id))
 }
 
-pub fn find_entry<'a>(query: &str, db: &'a Database) -> Option<EntryRef<'a>> {
-    get_entries(db).find(|entry| entry.entry_path().ends_with(query))
+#[derive(Debug, PartialEq, Eq)]
+pub enum EntryLookupError {
+    Ambiguous { query: String, matches: usize },
+}
+
+impl fmt::Display for EntryLookupError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            EntryLookupError::Ambiguous { query, matches } => {
+                write!(f, "Ambiguous entry `{query}` ({matches} matches)")
+            }
+        }
+    }
+}
+
+impl error::Error for EntryLookupError {}
+
+pub fn find_entry<'a>(
+    query: &str,
+    db: &'a Database,
+) -> Result<Option<EntryRef<'a>>, EntryLookupError> {
+    let mut matches = get_entries(db).filter(|entry| is_entry_match(entry, query));
+    let first = matches.next();
+    let second = matches.next();
+
+    if second.is_some() {
+        return Err(EntryLookupError::Ambiguous {
+            query: query.to_string(),
+            matches: 2 + matches.count(),
+        });
+    }
+
+    Ok(first)
+}
+
+fn is_entry_match(entry: &EntryRef<'_>, query: &str) -> bool {
+    let path = entry.entry_path();
+
+    entry.get_title() == Some(query)
+        || path == query
+        || path
+            .strip_suffix(query)
+            .is_some_and(|prefix| prefix.ends_with('/'))
 }
 
 pub trait EntryPath {
@@ -197,10 +257,92 @@ mod tests {
             "/root/child/My Title"
         );
 
-        assert!(find_entry("/root/child/My Title", &db).is_some());
-        assert!(find_entry("child/My Title", &db).is_some());
-        assert!(find_entry("My Title", &db).is_some());
-        assert!(find_entry("Title", &db).is_some());
-        assert!(find_entry("My Other Title", &db).is_none());
+        assert!(find_entry("/root/child/My Title", &db).unwrap().is_some());
+        assert!(find_entry("child/My Title", &db).unwrap().is_some());
+        assert!(find_entry("My Title", &db).unwrap().is_some());
+        assert!(find_entry("Title", &db).unwrap().is_none());
+        assert!(find_entry("My Other Title", &db).unwrap().is_none());
+    }
+
+    #[test]
+    fn test_find_entry_ambiguous() {
+        let mut db = Database::new();
+        db.root_mut().edit(|g| g.name = "root".to_string());
+
+        db.root_mut()
+            .add_group()
+            .edit(|g| g.name = "first".to_string())
+            .add_entry()
+            .edit(|e| e.set_unprotected(fields::TITLE, "Shared".to_string()));
+
+        db.root_mut()
+            .add_group()
+            .edit(|g| g.name = "second".to_string())
+            .add_entry()
+            .edit(|e| e.set_unprotected(fields::TITLE, "Shared".to_string()));
+
+        assert!(matches!(
+            find_entry("Shared", &db),
+            Err(EntryLookupError::Ambiguous { matches: 2, .. })
+        ));
+        assert!(find_entry("first/Shared", &db).unwrap().is_some());
+    }
+
+    #[test]
+    fn test_show_entry_masks_protected_fields() {
+        let mut db = Database::new();
+
+        let entry = db
+            .root_mut()
+            .add_entry()
+            .edit(|e| {
+                e.set_unprotected(fields::TITLE, "TOTP Entry".to_string());
+                e.set_protected(fields::PASSWORD, "password".to_string());
+                e.set_unprotected(
+                    fields::OTP,
+                    "otpauth://totp/TOTP%20Entry:user?secret=JBSWY3DPEHPK3PXP&period=30&digits=6&\
+                     issuer=TOTP%20Entry"
+                        .to_string(),
+                );
+                e.set_protected("api_key", "secret-token".to_string());
+            })
+            .id();
+
+        let output = show_entry(&db.entry(entry).unwrap(), false);
+
+        assert!(output.contains("Password: ******"));
+        assert!(output.contains("otp: ******"));
+        assert!(output.contains("api_key: ******"));
+        assert!(!output.contains("secret-token"));
+        assert!(!output.contains("JBSWY3DPEHPK3PXP"));
+        assert!(!output.contains("TOTP Code:"));
+    }
+
+    #[test]
+    fn test_show_entry_reveals_sensitive_fields_when_requested() {
+        let mut db = Database::new();
+
+        let entry = db
+            .root_mut()
+            .add_entry()
+            .edit(|e| {
+                e.set_unprotected(fields::TITLE, "TOTP Entry".to_string());
+                e.set_protected(fields::PASSWORD, "password".to_string());
+                e.set_unprotected(
+                    fields::OTP,
+                    "otpauth://totp/TOTP%20Entry:user?secret=JBSWY3DPEHPK3PXP&period=30&digits=6&\
+                     issuer=TOTP%20Entry"
+                        .to_string(),
+                );
+                e.set_protected("api_key", "secret-token".to_string());
+            })
+            .id();
+
+        let output = show_entry(&db.entry(entry).unwrap(), true);
+
+        assert!(output.contains("Password: password"));
+        assert!(output.contains("otp: otpauth://"));
+        assert!(output.contains("api_key: secret-token"));
+        assert!(output.contains("TOTP Code:"));
     }
 }

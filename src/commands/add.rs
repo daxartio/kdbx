@@ -2,8 +2,13 @@ use std::path::PathBuf;
 
 use clap::ValueHint;
 use keepass::db::fields;
+use url::Url;
 
-use crate::{Result, STDIN, keepass::save_database, utils::open_database_interactively};
+use crate::{
+    Result, STDIN,
+    keepass::save_database,
+    utils::{DatabaseOpenResult, open_database_interactively},
+};
 
 #[derive(clap::Args)]
 pub struct Args {
@@ -28,13 +33,16 @@ pub(crate) fn run(args: Args) -> Result<()> {
     if !args.database.exists() {
         return Err("File does not exist".to_string().into());
     }
-    let (mut db, password) = open_database_interactively(
+    let DatabaseOpenResult::Opened(mut db, password) = open_database_interactively(
         &args.database,
         args.key_file.as_deref(),
         args.use_keyring,
         args.remove_key,
         false,
-    )?;
+    )?
+    else {
+        return Ok(());
+    };
     let entry_title = {
         put!("Title: ");
         STDIN.read_text()
@@ -53,14 +61,7 @@ pub(crate) fn run(args: Args) -> Result<()> {
         if totp_raw.starts_with("otpauth://") {
             totp_raw
         } else if !totp_raw.trim().is_empty() {
-            format!(
-                "otpauth://totp/{}:{}?secret={}&period=30&digits=6&issuer={}",
-                entry_title,
-                entry_username,
-                &totp_raw[..],
-                entry_title
-            )
-            .into()
+            build_totp_uri(&entry_title, &entry_username, &totp_raw)?
         } else {
             totp_raw
         }
@@ -72,11 +73,51 @@ pub(crate) fn run(args: Args) -> Result<()> {
         entry.set_protected(fields::PASSWORD, entry_password.as_ref());
 
         if !totp_raw.trim().is_empty() {
-            entry.set_protected("otp", totp_raw.as_ref());
+            entry.set_protected(fields::OTP, totp_raw.as_ref());
         }
     });
 
-    save_database(db, &args.database, args.key_file.as_deref(), password)?;
+    save_database(*db, &args.database, args.key_file.as_deref(), password)?;
 
     Ok(())
+}
+
+fn build_totp_uri(title: &str, username: &str, secret: &str) -> Result<crate::pwd::Pwd> {
+    let mut url = Url::parse("otpauth://totp/")?;
+    let label = format!("{title}:{username}");
+    url.path_segments_mut()
+        .map_err(|_| std::io::Error::other("invalid TOTP URL base"))?
+        .clear()
+        .push(&label);
+    url.query_pairs_mut()
+        .append_pair("secret", secret.trim())
+        .append_pair("period", "30")
+        .append_pair("digits", "6")
+        .append_pair("issuer", title);
+
+    Ok(url.to_string().into())
+}
+
+#[cfg(test)]
+mod tests {
+    use std::collections::HashMap;
+
+    use super::*;
+
+    #[test]
+    fn test_build_totp_uri_encodes_input() {
+        let uri = build_totp_uri("Acme & Co", "user@example.com", "ABCD EFG=").unwrap();
+        let uri = uri.as_ref();
+
+        assert!(!uri.contains(' '));
+        assert!(uri.starts_with("otpauth://totp/"));
+
+        let parsed = Url::parse(uri).unwrap();
+        let query = parsed.query_pairs().into_owned().collect::<HashMap<_, _>>();
+
+        assert_eq!(query.get("secret").unwrap(), "ABCD EFG=");
+        assert_eq!(query.get("issuer").unwrap(), "Acme & Co");
+        assert_eq!(query.get("period").unwrap(), "30");
+        assert_eq!(query.get("digits").unwrap(), "6");
+    }
 }
