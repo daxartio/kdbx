@@ -105,7 +105,7 @@ pub(crate) fn run(args: Args) -> Result<()> {
 
 fn clip(entry: &EntryRef<'_>, raw: bool) -> Result<()> {
     let totp = get_totp(entry, raw)?;
-    if set_clipboard(Some(totp.into())).is_err() {
+    if set_clipboard(Some(totp)).is_err() {
         return Err(format!(
             "Clipboard unavailable. Try use STDOUT, i.e. `kdbx totp '{}' | cat`.",
             entry.get_title().unwrap_or_default()

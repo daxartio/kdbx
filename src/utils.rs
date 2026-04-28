@@ -264,11 +264,7 @@ pub fn skim<'a>(
         })
         .unwrap();
 
-    if let Some(idx) = res {
-        Some(entries.remove(idx))
-    } else {
-        None
-    }
+    res.map(|idx| entries.remove(idx))
 }
 
 impl SkimItem for EntryItem {

@@ -147,13 +147,7 @@ pub fn get_entries(db: &Database) -> impl Iterator<Item = EntryRef<'_>> {
 }
 
 pub fn find_entry<'a>(query: &str, db: &'a Database) -> Option<EntryRef<'a>> {
-    for entry in get_entries(db) {
-        if entry.entry_path().ends_with(query) {
-            return Some(entry);
-        }
-    }
-
-    None
+    get_entries(db).find(|entry| entry.entry_path().ends_with(query))
 }
 
 pub trait EntryPath {
