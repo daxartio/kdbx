@@ -194,16 +194,20 @@ pub fn skim<'a>(
     full_screen: bool,
     with_totp: bool,
 ) -> Option<EntryRef<'a>> {
-    let opts = SkimOptionsBuilder::default()
+    let mut options_builder = SkimOptionsBuilder::default();
+    if let Some(query) = query {
+        options_builder.query(query);
+    }
+    if full_screen {
+        options_builder.header(" "); // separate counters and entries with a line
+    }
+    if show_preview {
+        options_builder.preview("");
+    }
+    let opts = options_builder
         .multi(false)
         .reverse(true)
-        .query(query)
-        .header(if full_screen {
-            Some(" ".to_string())
-        } else {
-            None
-        }) // separate counters and entries with a line
-        .color(Some("16".to_string())) // 16 colors scheme
+        .color("16") // 16 colors scheme
         .height("7".to_string())
         .no_height(full_screen)
         .bind(vec![
@@ -216,16 +220,9 @@ pub fn skim<'a>(
         } else {
             Regex::new("/").expect("valid regex")
         })
-        .preview(if show_preview {
-            Some("".to_string())
-        } else {
-            None
-        })
         .preview_window(PreviewLayout::from("right:65%"))
         .build()
         .expect("well formed SkimOptions");
-
-    let (tx, rx): (SkimItemSender, SkimItemReceiver) = unbounded();
 
     let mut entries = entries
         .into_iter()
@@ -238,30 +235,23 @@ pub fn skim<'a>(
         })
         .collect::<Vec<_>>();
 
-    entries
-        .iter()
-        .enumerate()
-        .map(|(idx, e)| {
-            let title = if hide_groups {
-                e.get(fields::TITLE).unwrap_or_default().to_string()
-            } else {
-                e.entry_path()
-            };
+    let items = entries.iter().enumerate().map(|(idx, e)| {
+        let title = if hide_groups {
+            e.get(fields::TITLE).unwrap_or_default().to_string()
+        } else {
+            e.entry_path()
+        };
 
-            let props = if show_preview {
-                Some(show_entry(e.deref(), false))
-            } else {
-                None
-            };
+        let props = if show_preview {
+            Some(show_entry(e.deref(), false))
+        } else {
+            None
+        };
 
-            EntryItem { idx, title, props }
-        })
-        .for_each(|item| tx.send(Arc::new(item)).unwrap());
+        EntryItem { idx, title, props }
+    });
 
-    // No more input expected, dropping sender
-    drop(tx);
-
-    let res = Skim::run_with(opts, Some(rx))
+    let res = Skim::run_items(opts, items)
         .map(|res| {
             if res.is_abort || res.selected_items.len() != 1 {
                 None
@@ -274,7 +264,8 @@ pub fn skim<'a>(
                     .map(|ei: &EntryItem| ei.idx)
             }
         })
-        .unwrap();
+        .ok()
+        .flatten();
 
     res.map(|idx| entries.remove(idx))
 }

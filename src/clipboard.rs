@@ -1,6 +1,7 @@
 #[cfg(feature = "clipboard")]
 use arboard::Clipboard;
-use log::*;
+#[cfg(feature = "clipboard")]
+use log::warn;
 
 use crate::{Result, pwd::Pwd};
 
