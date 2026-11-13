@@ -6,7 +6,7 @@ use keepass::db::EntryRef;
 use crate::{
     Result,
     clipboard::set_clipboard,
-    keepass::{find_entry, get_entries},
+    keepass::{find_entry, get_entries, get_otp},
     pwd::Pwd,
     utils::{DatabaseOpenResult, is_tty, open_database_interactively, skim},
 };
@@ -127,8 +127,7 @@ fn get_totp(entry: &EntryRef<'_>, raw: bool) -> Result<Pwd> {
             .trim()
             .to_string()
     } else {
-        entry
-            .get_otp()?
+        get_otp(entry)?
             .value_now()
             .map_err(|e| format!("Unable to compute TOTP: {e}"))?
             .code

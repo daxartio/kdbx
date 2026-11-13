@@ -7,9 +7,10 @@ use std::{
 
 use keepass::{
     Database, DatabaseKey,
-    db::{Entry, EntryId, EntryRef, GroupId, fields},
+    db::{Entry, EntryId, EntryRef, GroupId, TOTP, TOTPError, fields},
     error::{DatabaseOpenError, DatabaseSaveError},
 };
+use url::Url;
 
 use crate::pwd::Pwd;
 
@@ -88,12 +89,33 @@ pub fn show_entry(entry: &Entry, show_sensitive: bool) -> String {
         }
     }
 
-    if show_sensitive && let Some(code) = entry.get_otp().ok().and_then(|otp| otp.value_now().ok())
-    {
+    if show_sensitive && let Some(code) = get_otp(entry).ok().and_then(|otp| otp.value_now().ok()) {
         lines.push(format!("TOTP Code: {}", code.code));
     }
 
     lines.join("\n")
+}
+
+pub fn get_otp(entry: &Entry) -> Result<TOTP, TOTPError> {
+    let raw = entry.get_raw_otp_value().ok_or(TOTPError::NoRecord)?;
+    let mut url = Url::parse(raw.trim())?;
+    let query: Vec<_> = url
+        .query_pairs()
+        .map(|(key, value)| {
+            let value = if key == "secret" {
+                value
+                    .chars()
+                    .filter(|character| !character.is_ascii_whitespace())
+                    .map(|character| character.to_ascii_uppercase())
+                    .collect()
+            } else {
+                value.into_owned()
+            };
+            (key.into_owned(), value)
+        })
+        .collect();
+    url.query_pairs_mut().clear().extend_pairs(query);
+    url.as_str().parse()
 }
 
 fn push_field(
