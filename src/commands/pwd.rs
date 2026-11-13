@@ -1,13 +1,13 @@
 use std::{io, path::PathBuf, thread, time};
 
 use clap::ValueHint;
-use keepass::db::EntryRef;
+use keepass::db::{EntryRef, History, fields};
 use log::*;
 
 use crate::{
-    CANCEL, CANCEL_RQ_FREQ, Result,
+    CANCEL, CANCEL_RQ_FREQ, Result, STDIN,
     clipboard::set_clipboard,
-    keepass::{find_entry, get_entries},
+    keepass::{find_entry, get_entries, save_database},
     pwd::Pwd,
     utils::{DatabaseOpenResult, is_tty, open_database_interactively, skim},
 };
@@ -19,6 +19,10 @@ pub struct Args {
     /// Timeout in seconds before clearing the clipboard. 0 means no clean-up
     #[arg(short, long, default_value_t = crate::DEFAULT_TIMEOUT)]
     timeout: u8,
+
+    /// Change the entry password, preserving the previous version in history
+    #[arg(short = 'e', long)]
+    edit: bool,
 
     /// Show entries without group(s)
     #[arg(short = 'G', long)]
@@ -53,11 +57,22 @@ pub struct Args {
     key_file: Option<PathBuf>,
 }
 
+enum PwdMode {
+    Show,
+    Edit,
+}
+
+impl From<&Args> for PwdMode {
+    fn from(args: &Args) -> Self {
+        if args.edit { Self::Edit } else { Self::Show }
+    }
+}
+
 pub(crate) fn run(args: Args) -> Result<()> {
     if !args.database.exists() {
         return Err("File does not exist".to_string().into());
     }
-    let DatabaseOpenResult::Opened(db, _) = open_database_interactively(
+    let DatabaseOpenResult::Opened(mut db, password) = open_database_interactively(
         &args.database,
         args.key_file.as_deref(),
         args.use_keyring,
@@ -68,39 +83,84 @@ pub(crate) fn run(args: Args) -> Result<()> {
         return Ok(());
     };
 
+    let mode: PwdMode = (&args).into();
+
     let query = args.entry.as_ref().map(String::as_ref);
 
-    if let Some(query) = query
-        && let Some(entry) = find_entry(query, &db)?
+    let entry = if let Some(entry) = query
+        .map(|query| find_entry(query, &db))
+        .transpose()?
+        .flatten()
     {
-        // Print password to stdout when pipe used
-        // e.g. `kdbx pwd example.com | cat`
-        if !is_tty(io::stdout()) {
-            put!("{}", entry.get_password().unwrap_or_default());
-            return Ok(());
+        entry
+    } else {
+        if args.no_interaction {
+            return Err("Not found".to_string().into());
         }
-        return clip(&entry, args.timeout);
-    }
 
-    if args.no_interaction {
-        return Err("Not found".to_string().into());
-    }
+        if !is_tty(io::stdout()) {
+            return Err(format!("No single match for {}.", query.unwrap_or("[empty]")).into());
+        }
 
-    // If more than a single match has been found and stdout is not a TTY
-    // than it is not possible to pick the right entry without user's interaction
-    if !is_tty(io::stdout()) {
-        return Err(format!("No single match for {}.", query.unwrap_or("[empty]")).into());
-    }
+        let Some(entry) = skim(
+            get_entries(&db).collect::<Vec<_>>(),
+            query.map(String::from),
+            args.no_group,
+            args.preview,
+            args.full_screen,
+            false,
+        ) else {
+            return Ok(());
+        };
+        entry
+    };
 
-    if let Some(entry) = skim(
-        get_entries(&db).collect::<Vec<_>>(),
-        query.map(String::from),
-        args.no_group,
-        args.preview,
-        args.full_screen,
-        false,
-    ) {
-        clip(&entry, args.timeout)?
+    match mode {
+        PwdMode::Show => {
+            if !is_tty(io::stdout()) {
+                put!("{}", entry.get_password().unwrap_or_default());
+            } else {
+                clip(&entry, args.timeout)?;
+            }
+        }
+        PwdMode::Edit => {
+            let interactive = is_tty(io::stdin());
+            if interactive && args.no_interaction {
+                return Err("No interaction".into());
+            }
+            if interactive {
+                put!("New password: ");
+            }
+            let new_password = STDIN.try_read_password()?;
+            if interactive {
+                put!("Confirm: ");
+            }
+            let confirm = STDIN.try_read_password()?;
+            if new_password != confirm {
+                return Err("Passwords do not match".into());
+            }
+            if entry.get_password() == Some(new_password.as_ref()) {
+                return Ok(());
+            }
+
+            let entry_id = entry.id();
+            {
+                let mut entry = db.entry_mut(entry_id).ok_or("Entry no longer exists")?;
+                entry
+                    .track_changes()
+                    .set_protected(fields::PASSWORD, new_password.as_ref());
+                // keepass 0.17 prepends snapshots; KeePass expects oldest-first history.
+                if let Some(history) = entry.history.take() {
+                    let versions = history.get_entries();
+                    let mut ordered = History::default();
+                    for version in versions.iter().take(1).chain(versions.iter().skip(1).rev()) {
+                        ordered.add_entry(version.clone());
+                    }
+                    entry.history = Some(ordered);
+                }
+            }
+            save_database(*db, &args.database, args.key_file.as_deref(), password)?;
+        }
     }
 
     Ok(())

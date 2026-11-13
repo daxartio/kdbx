@@ -25,9 +25,17 @@ impl Stdin {
     }
 
     pub fn read_password(&self) -> Pwd {
-        let pwd = read_password(self.0).unwrap().into();
+        let password = read_password(self.0).unwrap().unwrap_or_default().into();
         self.reset_tty();
-        pwd
+        password
+    }
+
+    pub fn try_read_password(&self) -> io::Result<Pwd> {
+        let password = read_password(self.0);
+        self.reset_tty();
+        password?
+            .map(Pwd::from)
+            .ok_or_else(|| io::Error::new(io::ErrorKind::UnexpectedEof, "Password input ended"))
     }
 
     pub fn read_text(&self) -> String {
@@ -58,7 +66,7 @@ fn new_impl() -> ::std::io::Result<Stdin> {
     Err(io::Error::last_os_error())
 }
 
-fn read_password(tty: Option<libc::termios>) -> ::std::io::Result<String> {
+fn read_password(tty: Option<libc::termios>) -> io::Result<Option<String>> {
     let mut password = String::new();
 
     if let Some(mut termios) = tty {
@@ -68,16 +76,17 @@ fn read_password(tty: Option<libc::termios>) -> ::std::io::Result<String> {
         termios.c_lflag |= ECHONL;
 
         unsafe { tcsetattr(STDIN_FILENO, TCSANOW, &termios) };
-
-        io::stdin().read_line(&mut password)?;
     } else {
         info!("read_password() :: NOT A TTY");
-        io::stdin().read_to_string(&mut password)?;
+    }
+
+    if io::stdin().read_line(&mut password)? == 0 {
+        return Ok(None);
     }
 
     trim_newlines(&mut password);
 
-    Ok(password)
+    Ok(Some(password))
 }
 
 fn read_text(tty: Option<libc::termios>) -> ::std::io::Result<String> {

@@ -29,6 +29,7 @@ url = "2.5"
 libc = "0.2"
 log = { version = "0.4", features = ["max_level_trace", "release_max_level_warn"] }
 once_cell = "1.21"
+tempfile = "3.27"
 regex = "1.13"
 hex = "0.4"
 zeroize = "1.9"
@@ -40,7 +41,6 @@ skim = { version = "5.9", default-features = false }
 assert_cmd = "2.2"
 predicates = "3.1"
 rstest = "0.28"
-tempfile = "3.27"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 security-framework = "3"

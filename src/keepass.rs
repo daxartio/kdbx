@@ -1,15 +1,17 @@
 use std::{
     error, fmt,
-    fs::File,
+    fs::{self, File},
     io::{self, Cursor, Read},
     path::Path,
 };
 
 use keepass::{
     Database, DatabaseKey,
+    config::DatabaseVersion,
     db::{Entry, EntryId, EntryRef, GroupId, TOTP, TOTPError, fields},
     error::{DatabaseOpenError, DatabaseSaveError},
 };
+use tempfile::NamedTempFile;
 use url::Url;
 
 use crate::pwd::Pwd;
@@ -30,15 +32,45 @@ pub fn new_database_key(keyfile: Option<&Path>, password: Pwd) -> io::Result<Dat
     Ok(key)
 }
 
+/// Saves KDBX 4.0 as 4.1 because keepass 0.17 only writes 4.1.
 pub fn save_database(
-    db: Database,
+    mut db: Database,
     dbfile: &Path,
     keyfile: Option<&Path>,
     password: Pwd,
 ) -> Result<(), DatabaseSaveError> {
+    if db.config.version == DatabaseVersion::KDB4(0) {
+        db.config.version = DatabaseVersion::KDB4(1);
+    }
     let key = new_database_key(keyfile, password)?;
-    let mut file = File::create(dbfile)?;
-    db.save(&mut file, key)?;
+    let target = if dbfile.exists() {
+        dbfile.canonicalize()?
+    } else {
+        dbfile.to_path_buf()
+    };
+    let parent = target
+        .parent()
+        .filter(|parent| !parent.as_os_str().is_empty())
+        .unwrap_or(Path::new("."));
+    let permissions = if target.exists() {
+        let permissions = fs::metadata(&target)?.permissions();
+        if permissions.readonly() {
+            return Err(
+                io::Error::new(io::ErrorKind::PermissionDenied, "Database is read-only").into(),
+            );
+        }
+        File::options().write(true).open(&target)?;
+        Some(permissions)
+    } else {
+        None
+    };
+    let mut file = NamedTempFile::new_in(parent)?;
+    db.save(file.as_file_mut(), key)?;
+    if let Some(permissions) = permissions {
+        file.as_file().set_permissions(permissions)?;
+    }
+    file.as_file().sync_all()?;
+    file.persist(&target).map_err(|error| error.error)?;
     Ok(())
 }
 

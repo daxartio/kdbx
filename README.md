@@ -65,7 +65,20 @@ kdbx pwd github.com | cat
 kdbx totp github.com | cat
 ```
 
-Read password from STDIN:
+Change an existing entry's password (KDBX 4 only):
+
+```
+kdbx pwd --edit github.com
+```
+
+Enter the new password twice. The previous entry version is preserved in
+[KeePass history](https://keepass.info/help/v2/entry.html#hst).
+KDBX 4.0 databases are saved as KDBX 4.1, retaining their encryption and key
+derivation settings. KDBX 3 databases cannot be saved.
+With piped input, provide the database password, new password, and confirmation
+on separate lines. Without an entry argument, select the entry interactively.
+
+Read password from STDIN (one line):
 
 ```
 cat /mnt/usb/key | kdbx pwd
@@ -117,6 +130,7 @@ Arguments:
 
 Options:
   -t, --timeout <TIMEOUT>    Timeout in seconds before clearing the clipboard. 0 means no clean-up [default: 15]
+  -e, --edit                 Change the entry password, preserving the previous version in history
   -G, --no-group             Show entries without group(s)
   -n, --no-interaction       Do not ask any interactive question
   -v, --preview              Preview entry during picking
